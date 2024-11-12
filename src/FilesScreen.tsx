@@ -1,7 +1,8 @@
 // FilesScreen.tsx
 
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, Button, View, Alert } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TextInput, Button, View, Alert, TouchableOpacity, FlatList } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
 import { ShareFile, useGetShare } from './useGetShare';
 import { API_URL, API_TOKEN } from '@env';
@@ -18,13 +19,18 @@ const FilesScreen = () => {
     guest_name: '',
     guest_document: '',
     apartment: '',
+    guests: 1,
   });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateField, setDateField] = useState<'checkin' | 'checkout' | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedHour, setSelectedHour] = useState({ checkin: '00:00', checkout: '00:00' });
+
+  const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
   useEffect(() => {
     if (sharedFiles) {
-        
       setFiles(sharedFiles);
-      // Populate the form with extractedData of the first file (or any specific file as per your need)
       const firstFile = sharedFiles[0];
       if (firstFile && firstFile.extractedData) {
         setReservationData({
@@ -32,23 +38,19 @@ const FilesScreen = () => {
           checkout: firstFile.extractedData.check_out || '',
           guest_name: firstFile.extractedData.guest_name || '',
           guest_document: firstFile.extractedData.guest_document || '',
-          apartment: '', // Apartment will be chosen manually
+          guests: firstFile.extractedData.guests,
+          apartment: '',
         });
       }
     }
   }, [sharedFiles]);
 
-  console.log('----- 1', reservationData)
-
-  // Fetch available apartments from the API
   useEffect(() => {
     const fetchApartments = async () => {
       const token = await AsyncStorage.getItem('accessToken');
       try {
         const response = await axios.get(`${API_URL}/api/apartments/`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setApartments(response.data);
       } catch (error) {
@@ -58,17 +60,32 @@ const FilesScreen = () => {
     fetchApartments();
   }, []);
 
-  console.log('----- 2', apartments)
+  const handleInputChange = (field: string, value: string) => {
+    setReservationData((prevData) => ({ ...prevData, [field]: value }));
+  };
 
-  // Handle form submission to create a reservation
+  const onDateChange = (event, date) => {
+    setShowDatePicker(false);
+    if (date && dateField) {
+      const formattedDate = date.toISOString().split('T')[0];
+      const dateTime = `${formattedDate} ${selectedHour[dateField]}`;
+      handleInputChange(dateField, dateTime);
+      setSelectedDate(date);
+    }
+  };
+
+  const onHourSelect = (field: 'checkin' | 'checkout', hour) => {
+    setSelectedHour((prevHour) => ({ ...prevHour, [field]: hour }));
+    const formattedDate = selectedDate.toISOString().split('T')[0];
+    const dateTime = `${formattedDate} ${hour}`;
+    handleInputChange(field, dateTime);
+  };
+
   const handleSubmit = async () => {
     try {
       const token = await AsyncStorage.getItem('accessToken');
-      console.log(API_URL, token, reservationData)
       const response = await axios.post(`${API_URL}/api/reservations/`, reservationData, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       Alert.alert("Success", "Reservation created successfully!");
     } catch (error) {
@@ -77,62 +94,100 @@ const FilesScreen = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setReservationData((prevData) => ({
-      ...prevData,
-      [field]: value,
-    }));
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       {files.length > 0 ? (
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Create Reservation</Text>
-          <Text>Check-In:</Text>
-          <TextInput
-            style={styles.input}
-            value={reservationData.checkin}
-            onChangeText={(value) => handleInputChange('checkin', value)}
-            placeholder="YYYY-MM-DDTHH:MM:SSZ"
-          />
-          <Text>Check-Out:</Text>
-          <TextInput
-            style={styles.input}
-            value={reservationData.checkout}
-            onChangeText={(value) => handleInputChange('checkout', value)}
-            placeholder="YYYY-MM-DDTHH:MM:SSZ"
-          />
-          <Text>Guest Name:</Text>
+          <Text style={styles.title}>Geração de Reserva</Text>
+
+          {/* Check-In Date and Hour Selection */}
+          <Text>Data de Check-In:</Text>
+          <View style={styles.dateTimeRow}>
+            <TouchableOpacity onPress={() => { setDateField('checkin'); setShowDatePicker(true); }}>
+              <TextInput
+                style={styles.input}
+                value={reservationData.checkin}
+                placeholder="YYYY-MM-DD HH:MM"
+                editable={false}
+              />
+            </TouchableOpacity>
+            <Picker
+              selectedValue={selectedHour.checkin}
+              style={styles.hourPicker}
+              onValueChange={(hour) => onHourSelect('checkin', hour)}
+            >
+              {hours.map((hour) => (
+                <Picker.Item key={hour} label={hour} value={hour} />
+              ))}
+            </Picker>
+          </View>
+
+          {/* Check-Out Date and Hour Selection */}
+          <Text>Data de Check-Out:</Text>
+          <View style={styles.dateTimeRow}>
+            <TouchableOpacity onPress={() => { setDateField('checkout'); setShowDatePicker(true); }}>
+              <TextInput
+                style={styles.input}
+                value={reservationData.checkout}
+                placeholder="YYYY-MM-DD HH:MM"
+                editable={false}
+              />
+            </TouchableOpacity>
+            <Picker
+              selectedValue={selectedHour.checkout}
+              style={styles.hourPicker}
+              onValueChange={(hour) => onHourSelect('checkout', hour)}
+            >
+              {hours.map((hour) => (
+                <Picker.Item key={hour} label={hour} value={hour} />
+              ))}
+            </Picker>
+          </View>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={onDateChange}
+            />
+          )}
+
+          {/* Other Inputs */}
+          <Text>Nome do Hóspede:</Text>
           <TextInput
             style={styles.input}
             value={reservationData.guest_name}
             onChangeText={(value) => handleInputChange('guest_name', value)}
-            placeholder="Guest Name"
           />
-          <Text>Guest Document:</Text>
+          <Text>Documento do Hóspede:</Text>
           <TextInput
             style={styles.input}
             value={reservationData.guest_document}
             onChangeText={(value) => handleInputChange('guest_document', value)}
-            placeholder="Guest Document"
           />
-          <Text>Apartment:</Text>
+          <Text>Quantidade de Hóspedes:</Text>
+          <TextInput
+            style={styles.input}
+            value={String(reservationData.guests)}
+            onChangeText={(value) => handleInputChange('guests', value)}
+          />
+          <Text>Apartamento:</Text>
           <Picker
             selectedValue={reservationData.apartment}
             style={styles.picker}
             onValueChange={(value) => handleInputChange('apartment', value)}
           >
-            <Picker.Item label="Select Apartment" value="" />
+            <Picker.Item label="Seleciona o Apartamento" value="" />
             {apartments.map((apartment) => (
               <Picker.Item
                 key={apartment.id}
-                label={apartment.id} // Assuming each apartment has a 'name' property
+                label={apartment.id}
                 value={apartment.id}
               />
             ))}
           </Picker>
-          <Button title="Submit Reservation" onPress={handleSubmit} />
+          <Button title="Registrar Reserva" onPress={handleSubmit} />
         </View>
       ) : (
         <Text>No files received</Text>
@@ -148,9 +203,21 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 12,
+    padding: 5,
     borderRadius: 4,
     marginBottom: 16,
+    flex: 1,
+  },
+  dateTimeRow: {
+    flexDirection: 'row',
+    alignContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  hourPicker: {
+    height: 50,
+    width: 120,
+    marginLeft: 8,
   },
   picker: { height: 50, width: '100%', marginBottom: 16 },
 });

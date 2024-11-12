@@ -17,6 +17,7 @@ const LoginScreen = ({ onLoginSuccess }: any) => {
             username,
             password,
         });
+        console.log(response)
         await AsyncStorage.setItem('accessToken', response.data.access);
         await AsyncStorage.setItem('refreshToken', response.data.refresh);
         onLoginSuccess();

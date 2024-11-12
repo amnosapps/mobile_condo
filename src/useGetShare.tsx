@@ -57,6 +57,7 @@ export const useGetShare = () => {
 
   const extractDataFromLocalAPI = async (pdfContent: string): Promise<any> => {
     const token = await AsyncStorage.getItem('accessToken');
+    console.log(pdfContent)
     try {
       const response = await axios.post(
         `${API_URL}/api/reservations/extract-dates/`,
