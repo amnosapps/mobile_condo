@@ -18,40 +18,49 @@ export type ShareFile = {
   extractedData?: any;
 };
 
-export const useGetShare = (navigation) => {
+export const useGetShare = () => {
   const [share, setShare] = useState<ShareFile[] | undefined>(undefined);
 
-  // Define loadFiles function
-  const loadFiles = useCallback(() => {
+  // Automatic file loading on app start when a file is shared
+  useEffect(() => {
     ReceiveSharingIntent.getReceivedFiles(
       async (files: ShareFile[]) => {
-        const updatedFiles = await Promise.all(
-          files.map(async (file) => {
-            if (file.mimeType === 'application/pdf' && file.filePath) {
-              const content = await readPDFContent(file.filePath);
-              const extractedData = await extractDataFromLocalAPI(content);
-              return { ...file, content, extractedData };
-            }
-            return file;
-          })
-        );
-        setShare(updatedFiles);
-
-        if (updatedFiles.length > 0 && navigation) {
-          navigation.navigate('FilesScreen');
-        }
+        const processedFiles = await processFiles(files);
+        setShare(processedFiles);
       },
       (error: any) => {
-        console.log("Error receiving files:", error);
+        console.error("Error receiving files:", error);
       },
       'your.unique.protocol'
     );
-  }, [navigation]);
+  }, []);
 
-  // Initialize loadFiles on mount
-  useEffect(() => {
-    loadFiles();
-  }, [loadFiles]);
+  // Function to manually trigger file loading
+  const loadFiles = useCallback(async () => {
+    // Trigger file selection, e.g., using a file picker library if needed
+    const selectedFiles = await manuallySelectFiles();
+    const processedFiles = await processFiles(selectedFiles);
+    setShare(processedFiles);
+  }, []);
+
+  const processFiles = async (files: ShareFile[]) => {
+    return Promise.all(
+      files.map(async (file) => {
+        if (file.mimeType === 'application/pdf' && file.filePath) {
+          const content = await readPDFContent(file.filePath);
+          const extractedData = await extractDataFromLocalAPI(content);
+          return { ...file, content, extractedData };
+        }
+        return file;
+      })
+    );
+  };
+
+  const manuallySelectFiles = async (): Promise<ShareFile[]> => {
+    // This is a placeholder; integrate a file picker library for file selection.
+    // Replace this with actual logic to select a file and get its metadata.
+    return [];
+  };
 
   const readPDFContent = async (filePath: string): Promise<string> => {
     try {
@@ -78,5 +87,5 @@ export const useGetShare = (navigation) => {
     }
   };
 
-  return { share, loadFiles }; // Return both share and loadFiles
+  return { share, loadFiles };
 };
