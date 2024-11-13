@@ -1,18 +1,20 @@
 // App.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_URL } from '@env';
-import FilesScreen from './src/FilesScreen';
-import LoginScreen from './src/Login';
+import AuthenticatedTabs from './src/AuthenticatedTabs';
+import LoginScreen from './src/screens/Login';
+import FilesScreen from './src/screens/FilesScreen';
 
-const Stack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigationRef = useRef(null); // Reference for navigation
 
   const checkAuthentication = async () => {
     const token = await AsyncStorage.getItem('accessToken');
@@ -24,19 +26,13 @@ const App = () => {
     }
 
     try {
-      // Verify if the access token is still valid
-      const response = await axios.post(`${API_URL}/api/token/verify/`, {
-        token: token,
-      });
-
+      const response = await axios.post(`${API_URL}/api/token/verify/`, { token });
       if (response.status === 200) {
         setIsAuthenticated(true);
       } else {
-        // If the access token is invalid, try refreshing it
         const refreshResponse = await axios.post(`${API_URL}/api/token/refresh/`, {
           refresh: refreshToken,
         });
-
         const newAccessToken = refreshResponse.data.access;
         await AsyncStorage.setItem('accessToken', newAccessToken);
         setIsAuthenticated(true);
@@ -47,25 +43,29 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    checkAuthentication();
-  }, []);
-
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
   };
 
+  useEffect(() => {
+    checkAuthentication();
+  }, []);
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
+    <NavigationContainer ref={navigationRef}>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          <Stack.Screen name="Files" component={FilesScreen} />
+          <>
+            <RootStack.Screen name="AuthenticatedTabs" component={AuthenticatedTabs} />
+          </>
         ) : (
-          <Stack.Screen name="Login">
-            {(props) => <LoginScreen {...props} onLoginSuccess={handleLoginSuccess} />}
-          </Stack.Screen>
+          <RootStack.Screen
+            name="Login"
+            component={LoginScreen}
+            initialParams={{ onLoginSuccess: handleLoginSuccess }}
+          />
         )}
-      </Stack.Navigator>
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 };

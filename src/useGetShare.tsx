@@ -1,29 +1,28 @@
-// src/useGetShare.tsx
-
+// useGetShare.tsx
 import ReceiveSharingIntent from 'react-native-receive-sharing-intent';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import RNFS from 'react-native-fs';
 import axios from 'axios';
-
-import { API_URL } from '@env'; // Update import if you’re using a different setup
+import { API_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type ShareFile = {
-    filePath?: string;
-    text?: string;
-    weblink?: string;
-    mimeType?: string;
-    contentUri?: string;
-    fileName?: string;
-    extension?: string;
-    content?: string; // New field to store extracted content
-    extractedData?: any;
+  filePath?: string;
+  text?: string;
+  weblink?: string;
+  mimeType?: string;
+  contentUri?: string;
+  fileName?: string;
+  extension?: string;
+  content?: string;
+  extractedData?: any;
 };
 
-export const useGetShare = () => {
+export const useGetShare = (navigation) => {
   const [share, setShare] = useState<ShareFile[] | undefined>(undefined);
 
-  useEffect(() => {
+  // Define loadFiles function
+  const loadFiles = useCallback(() => {
     ReceiveSharingIntent.getReceivedFiles(
       async (files: ShareFile[]) => {
         const updatedFiles = await Promise.all(
@@ -37,13 +36,22 @@ export const useGetShare = () => {
           })
         );
         setShare(updatedFiles);
+
+        if (updatedFiles.length > 0 && navigation) {
+          navigation.navigate('FilesScreen');
+        }
       },
       (error: any) => {
-        console.log(error);
+        console.log("Error receiving files:", error);
       },
       'your.unique.protocol'
     );
-  }, []);
+  }, [navigation]);
+
+  // Initialize loadFiles on mount
+  useEffect(() => {
+    loadFiles();
+  }, [loadFiles]);
 
   const readPDFContent = async (filePath: string): Promise<string> => {
     try {
@@ -57,21 +65,12 @@ export const useGetShare = () => {
 
   const extractDataFromLocalAPI = async (pdfContent: string): Promise<any> => {
     const token = await AsyncStorage.getItem('accessToken');
-    console.log(pdfContent)
     try {
       const response = await axios.post(
         `${API_URL}/api/reservations/extract-dates/`,
-        {
-          pdf_base64: pdfContent,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { pdf_base64: pdfContent },
+        { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
-      console.log('Response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Failed to process PDF content', error);
@@ -79,5 +78,5 @@ export const useGetShare = () => {
     }
   };
 
-  return share;
+  return { share, loadFiles }; // Return both share and loadFiles
 };
