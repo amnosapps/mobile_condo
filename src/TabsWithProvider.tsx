@@ -12,10 +12,10 @@ const TabsWithProvider = ({ rootNavigation }) => {
   return (
     <SharedFilesProvider navigation={rootNavigation}> {/* Context provider */}
       <Tab.Navigator>
-        {/* <Tab.Screen name="Home" component={CalendarReservation} /> */}
+        <Tab.Screen name="Início" component={CalendarReservation} />
         <Tab.Screen name="Reservas" component={CalendarReservation} />
         <Tab.Screen name="FilesScreen" component={FilesScreen} />
-        {/* <Tab.Screen name="Serviços" component={CalendarReservation} /> */}
+        <Tab.Screen name="Serviços" component={CalendarReservation} />
       </Tab.Navigator>
     </SharedFilesProvider>
   );

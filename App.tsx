@@ -9,6 +9,7 @@ import { API_URL } from '@env';
 import AuthenticatedTabs from './src/AuthenticatedTabs';
 import LoginScreen from './src/screens/Login';
 import FilesScreen from './src/screens/FilesScreen';
+import ReservationDetailsScreen from './src/components/ReservationDetailsScreen';
 
 const RootStack = createNativeStackNavigator();
 
@@ -57,6 +58,7 @@ const App = () => {
         {isAuthenticated ? (
           <>
             <RootStack.Screen name="AuthenticatedTabs" component={AuthenticatedTabs} />
+            <RootStack.Screen name="ReservationDetails" component={ReservationDetailsScreen} />
           </>
         ) : (
           <RootStack.Screen

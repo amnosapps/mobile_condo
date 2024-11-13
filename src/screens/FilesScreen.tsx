@@ -1,6 +1,6 @@
 // FilesScreen.js
 import React, { useState, useEffect } from 'react';
-import { Text, Alert } from 'react-native';
+import { Text, Alert, Button, ActivityIndicator, View } from 'react-native';
 import Container from '../components/Container';
 import FileLoaderButton from '../components/FileLoaderButton';
 import DatePickerInput from '../components/DatePickerInput';
@@ -12,9 +12,10 @@ import RNFS from 'react-native-fs';
 import { API_URL } from '@env';
 
 const FilesScreen = () => {
-  const { sharedFiles } = useSharedFiles(); // Use shared files from context
+  const { sharedFiles } = useSharedFiles();
   const [files, setFiles] = useState([]);
   const [apartments, setApartments] = useState([]);
+  const [loading, setLoading] = useState(false); // Loading state
   const [reservationData, setReservationData] = useState({
     checkin: '',
     checkout: '',
@@ -31,6 +32,7 @@ const FilesScreen = () => {
       setFiles(sharedFiles);
       const firstFile = sharedFiles[0];
       if (firstFile && firstFile.extractedData) {
+        setLoading(true); // Start loading
         setReservationData((prevData) => ({
           ...prevData,
           checkin: firstFile.extractedData.check_in || '',
@@ -41,6 +43,7 @@ const FilesScreen = () => {
           apartment: '',
           has_children: false,
         }));
+        setLoading(false); // Stop loading
       }
     }
   }, [sharedFiles]);
@@ -48,6 +51,7 @@ const FilesScreen = () => {
   // Fetch apartment options from API
   useEffect(() => {
     const fetchApartments = async () => {
+      setLoading(true); // Start loading
       const token = await AsyncStorage.getItem('accessToken');
       try {
         const response = await axios.get(`${API_URL}/api/apartments/`, {
@@ -56,6 +60,8 @@ const FilesScreen = () => {
         setApartments(response.data);
       } catch (error) {
         console.error("Failed to load apartments", error);
+      } finally {
+        setLoading(false); // Stop loading
       }
     };
     fetchApartments();
@@ -65,8 +71,23 @@ const FilesScreen = () => {
     setReservationData((prevData) => ({ ...prevData, [field]: value }));
   };
 
+  // Function to reset reservation data
+  const clearReservationData = () => {
+    setReservationData({
+      checkin: '',
+      checkout: '',
+      guest_name: '',
+      guest_document: '',
+      apartment: '',
+      guests: 1,
+      has_children: false,
+    });
+    setFiles([]);
+  };
+
   // Function to handle file selection from FileLoaderButton
   const onFileSelected = async (file) => {
+    setLoading(true); // Start loading when file is selected
     try {
       const fileContent = await RNFS.readFile(file.uri, 'base64');
       const token = await AsyncStorage.getItem('accessToken');
@@ -93,12 +114,19 @@ const FilesScreen = () => {
     } catch (error) {
       console.error('Error processing file:', error);
       Alert.alert('Error', 'Failed to process file');
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   return (
     <Container>
-      {files.length > 0 ? (
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#00adf5" /> {/* Loading spinner */}
+          <Text>Carregando...</Text>
+        </View>
+      ) : files.length > 0 ? (
         <>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Geração de Reserva</Text>
           <DatePickerInput
@@ -120,11 +148,12 @@ const FilesScreen = () => {
             reservationData={reservationData}
             setReservationData={updateReservationData}
           />
+          <Button title="Clear Data" onPress={clearReservationData} color="#d9534f" />
         </>
       ) : (
         <>
-          <Text style={{ fontSize: 16, textAlign: 'center', marginVertical: 20 }}>No files received</Text>
-          <FileLoaderButton onFileSelected={onFileSelected} /> {/* File selection button */}
+          <Text style={{ fontSize: 16, textAlign: 'center', marginVertical: 20 }}>Nenhum Arquivo Selecionado</Text>
+          <FileLoaderButton onFileSelected={onFileSelected} />
         </>
       )}
     </Container>

@@ -23,7 +23,7 @@ const FileLoaderButton = ({ onFileSelected }) => {
     }
   };
 
-  return <Button title="Load Files" onPress={openFilePicker} />;
+  return <Button title="Selecionar PDF" onPress={openFilePicker} />;
 };
 
 export default FileLoaderButton;

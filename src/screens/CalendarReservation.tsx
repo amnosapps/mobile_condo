@@ -1,8 +1,7 @@
-// ReservationManager.tsx
-
+// CalendarReservationManager.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, Button } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import { View, Text, FlatList, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -11,7 +10,7 @@ import { API_URL } from '@env';
 import axios from 'axios';
 
 const CalendarReservationManager = () => {
-  const navigation = useNavigation(); // Initialize navigation hook
+  const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState('');
   const [reservations, setReservations] = useState([]);
   const [showWeekly, setShowWeekly] = useState(true);
@@ -91,13 +90,16 @@ const CalendarReservationManager = () => {
   }, [selectedDate, reservationsData]);
 
   const renderReservation = ({ item }) => (
-    <View style={styles.reservationItem}>
+    <TouchableOpacity 
+      style={styles.reservationItem}
+      onPress={() => navigation.navigate('ReservationDetails', { reservation: item })} // Navigate to details screen
+    >
       <Text style={styles.name}>{item.name}</Text>
       <Text>Apto: {item.room}</Text>
       <Text>Check-in: {item.checkIn}</Text>
       <Text>Check-out: {item.checkOut}</Text>
       {showWeekly && <Text>Data: {item.date}</Text>}
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -120,10 +122,6 @@ const CalendarReservationManager = () => {
       <Text style={styles.dateText}>
         {selectedDate ? `Reservas em ${selectedDate}` : 'Reservas da Semana'}
       </Text>
-      <Button 
-        title="Cadastrar Reserva" 
-        onPress={() => navigation.navigate('FilesScreen')} // Navigate to FilesScreen
-      />
       {reservations.length > 0 ? (
         <FlatList
           data={reservations}
@@ -140,30 +138,9 @@ const CalendarReservationManager = () => {
 export default CalendarReservationManager;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff'
-  },
-  dateText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  reservationItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc'
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-  noReservationText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
-    color: '#888'
-  }
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  dateText: { fontSize: 18, fontWeight: 'bold', marginVertical: 10 },
+  reservationItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#ccc' },
+  name: { fontSize: 16, fontWeight: 'bold' },
+  noReservationText: { textAlign: 'center', marginTop: 20, fontSize: 16, color: '#888' },
 });
-
