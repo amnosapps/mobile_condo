@@ -1,6 +1,7 @@
 // useGetShare.tsx
 import ReceiveSharingIntent from 'react-native-receive-sharing-intent';
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import RNFS from 'react-native-fs';
 import axios from 'axios';
 import { API_URL } from '@env';
@@ -18,7 +19,8 @@ export type ShareFile = {
   extractedData?: any;
 };
 
-export const useGetShare = () => {
+export const useGetShare = (navigation) => {
+  console.log(navigation)
   const [share, setShare] = useState<ShareFile[] | undefined>(undefined);
 
   // Automatic file loading on app start when a file is shared
@@ -33,6 +35,7 @@ export const useGetShare = () => {
       },
       'your.unique.protocol'
     );
+    navigation.navigate('AuthenticatedTabs', { screen: 'FilesScreen'})
   }, []);
 
   // Function to manually trigger file loading
