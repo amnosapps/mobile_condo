@@ -18,13 +18,14 @@ const LoginScreen = ({ route }) => {
             const response = await axios.post(`${API_URL}/api/token/`, {
                 username,
                 password,
-            });
+            }).catch();
 
             await AsyncStorage.setItem('accessToken', response.data.access);
             await AsyncStorage.setItem('refreshToken', response.data.refresh);
 
             if (onLoginSuccess) onLoginSuccess();
         } catch (err) {
+            console.error(err)
             setError('Login failed, please check your credentials.');
         }
     };

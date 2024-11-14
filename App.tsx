@@ -39,7 +39,7 @@ const App = () => {
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.log('Token verification failed:', error);
+      console.error('Token verification failed:', error);
       setIsAuthenticated(false);
     }
   };

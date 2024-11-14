@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns';
+import { parse, format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@env';
@@ -20,6 +20,7 @@ const CalendarReservationManager = () => {
   const fetchReservations = async () => {
     const token = await AsyncStorage.getItem("accessToken");
     try {
+      console.log(token)
       const response = await axios.get(`${API_URL}/api/reservations/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -45,13 +46,13 @@ const CalendarReservationManager = () => {
   const generateMarkedDates = () => {
     const markedDates = {};
     Object.keys(reservationsData).forEach((date) => {
-      markedDates[date] = { marked: true, dotColor: 'green' };
+      markedDates[date] = { marked: true, dotColor: '#DE7066' };
     });
     if (selectedDate) {
       markedDates[selectedDate] = {
         ...markedDates[selectedDate],
         selected: true,
-        selectedColor: '#00adf5',
+        selectedColor: '#DE7066',
       };
     }
     return markedDates;
@@ -89,21 +90,46 @@ const CalendarReservationManager = () => {
     }
   }, [selectedDate, reservationsData]);
 
+  const formatDate = (dateString) => {
+    // Parse the date string with `parse`
+    const parsedDate = parse(dateString, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", new Date(), { locale: ptBR });
+    
+    // Format to the desired output
+    return format(parsedDate, "dd/MM HH:mm");
+  };
+
   const renderReservation = ({ item }) => (
     <TouchableOpacity 
       style={styles.reservationItem}
       onPress={() => navigation.navigate('ReservationDetails', { reservation: item })} // Navigate to details screen
     >
-      <Text style={styles.name}>{item.name}</Text>
-      <Text>Apto: {item.room}</Text>
-      <Text>Check-in: {item.checkIn}</Text>
-      <Text>Check-out: {item.checkOut}</Text>
-      {showWeekly && <Text>Data: {item.date}</Text>}
+      <View style={{ width: '20%', justifyContent: 'center', alignItems: 'center',}}>
+        <Text style={{ color: '#DC574B', fontWeight: '500'}}>Apto</Text>
+        <Text style={{ color: '#DC574B', fontWeight: '500'}}>{item.room}</Text>
+      </View>
+      <View style={styles.reservationnInfo}>
+        <Text style={styles.reservationName}>Hóspede: {item.name}</Text>
+        
+        <View style={styles.dividerLine} />
+        
+        <View>
+          <Text style={{ color: '#DC574B'}}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
+  const CustomButton = ({ title, onPress }) => {
+    return (
+      <TouchableOpacity style={styles.addReservationButton} onPress={onPress}>
+        <Text style={styles.textReservationButton}>{title}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
+      {/* <CustomButton title="Atualizar" onPress={fetchReservations} /> */}
       <Calendar
         onDayPress={(day) => {
           setSelectedDate(day.dateString === selectedDate ? '' : day.dateString);
@@ -111,17 +137,24 @@ const CalendarReservationManager = () => {
         markedDates={generateMarkedDates()}
         monthFormat={'MMMM yyyy'}
         theme={{
-          todayTextColor: '#00adf5',
-          monthTextColor: '#333',
-          arrowColor: '#00adf5',
+          todayTextColor: '#DE7066',
+          monthTextColor: '#DE7066',
+          arrowColor: '#DE7066',
           textMonthFontWeight: 'bold',
           textDayHeaderFontWeight: 'bold',
         }}
       />
-      <Button title="Atualizar" onPress={fetchReservations} />
-      <Text style={styles.dateText}>
-        {selectedDate ? `Reservas em ${selectedDate}` : 'Reservas da Semana'}
-      </Text>
+      
+      <View style={styles.reservationHeader}>
+        <Text style={styles.dateText}>
+          {selectedDate ? `Reservas em ${selectedDate}` : 'Reservas da Semana'}
+        </Text>
+        <CustomButton
+          title="+" 
+          onPress={() => navigation.navigate('FilesScreen')} // Navigate to FilesScreen
+        />
+      </View>
+      
       {reservations.length > 0 ? (
         <FlatList
           data={reservations}
@@ -139,8 +172,44 @@ export default CalendarReservationManager;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  dateText: { fontSize: 18, fontWeight: 'bold', marginVertical: 10 },
-  reservationItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-  name: { fontSize: 16, fontWeight: 'bold' },
-  noReservationText: { textAlign: 'center', marginTop: 20, fontSize: 16, color: '#888' },
+  reservationHeader: { display: 'flex', flexDirection: 'row', alignContent: 'center', alignItems: 'center', marginTop: 10 },
+  dateText: { fontSize: 18, fontWeight: '400', marginVertical: 10, width: '80%', },
+  addReservationButton: { width: '20%', backgroundColor: '#DE7066', borderRadius: 30},
+  textReservationButton: { textAlign: 'center', color: 'white', fontSize: 15 },
+  reservationItem: {
+    display: 'flex',
+    flexDirection: 'row',
+    padding: 5,
+    width: '100%',           // Set a fixed width
+    borderRadius: 10,    // Half of width/height to make it a circle
+    backgroundColor: '#fff', // Optional background color for visibility
+    justifyContent: 'center',   // Center content vertically
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#DC574B',
+    marginTop: 10
+  },
+  reservationnInfo: {
+    width: '80%', 
+    borderRadius: 5,
+    // backgroundColor: '#FFD7C6', 
+    justifyContent: 'center',   // Center content vertically
+    height: 70,
+    padding: 10,
+  },
+  reservationName: {
+    fontSize: 15, 
+    fontWeight: 'bold', 
+    color: '#DC574B',
+  },
+  dividerLine: {
+    height: 1,               // Thickness of the line
+    backgroundColor: '#DC574B',  // Color of the line
+    marginVertical: 8,        // Space above and below the line
+    width: '100%',            // Makes the line full width
+  },
+  noReservationText: { 
+    textAlign: 'center', 
+    marginTop: 20, fontSize: 16, color: '#888' 
+  },
 });
