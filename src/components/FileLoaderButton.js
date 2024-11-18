@@ -1,9 +1,31 @@
 // FileLoaderButton.js
 import React from 'react';
-import { Button, Alert } from 'react-native';
+import { StyleSheet, Alert, TouchableOpacity, Text } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
 
+const styles = StyleSheet.create({
+  reservationButton: {
+    alignSelf: 'center',
+    borderRadius: 20,
+    backgroundColor: '#DE7066',
+    paddingVertical: 10,
+    paddingHorizontal: 100,
+  },
+  textReservationButton: {
+    textAlign: 'center',
+    color: '#fff',
+  },
+});
+
 const FileLoaderButton = ({ onFileSelected }) => {
+  const PdfButton = ({ title, onPress }) => {
+    return (
+      <TouchableOpacity style={styles.reservationButton} onPress={onPress}>
+        <Text style={styles.textReservationButton}>{title}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   const openFilePicker = async () => {
     try {
       const result = await DocumentPicker.pick({
@@ -23,7 +45,7 @@ const FileLoaderButton = ({ onFileSelected }) => {
     }
   };
 
-  return <Button title="Selecionar PDF" onPress={openFilePicker} />;
+  return <PdfButton title="Selecionar PDF" onPress={openFilePicker} />;
 };
 
 export default FileLoaderButton;

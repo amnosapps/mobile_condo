@@ -1,6 +1,6 @@
 // ReservationForm.js
 import React from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,20 +21,16 @@ const ReservationForm = ({ apartments, reservationData, updateReservationData })
     }
   };
 
+  const ReservationButton = ({ title, onPress }) => {
+    return (
+      <TouchableOpacity style={styles.reservationButton} onPress={onPress}>
+        <Text style={styles.textReservationButton}>{title}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.formContainer}>
-      <Text>Apartamento:</Text>
-      <Picker
-        selectedValue={reservationData.apartment}
-        style={styles.picker}
-        onValueChange={(value) => updateReservationData('apartment', value)}
-      >
-        <Picker.Item label="Seleciona o Apartamento" value="" />
-        {apartments.map((apartment) => (
-          <Picker.Item key={apartment.id} label={apartment.id} value={apartment.id} />
-        ))}
-      </Picker>
-
       <Text>Nome do Hóspede:</Text>
       <TextInput
         style={styles.input}
@@ -62,7 +58,18 @@ const ReservationForm = ({ apartments, reservationData, updateReservationData })
         <Picker.Item label="Sim" value="Sim" />
         <Picker.Item label="Não" value="Não" />
       </Picker>
-      <Button title="Registrar Reserva" onPress={handleSubmit} />
+      <Text>Apartamento:</Text>
+      <Picker
+        selectedValue={reservationData.apartment}
+        style={styles.picker}
+        onValueChange={(value) => updateReservationData('apartment', value)}
+      >
+        <Picker.Item label="Seleciona o Apartamento" value="" />
+        {apartments.map((apartment) => (
+          <Picker.Item key={apartment.id} label={apartment.number} value={apartment.id} />
+        ))}
+      </Picker>
+      <ReservationButton title="Registrar Reserva" onPress={handleSubmit} />
     </View>
   );
 };
@@ -73,11 +80,23 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 5,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 4,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   picker: { height: 50, width: '100%', marginBottom: 16 },
+  reservationButton: {
+    alignSelf: 'center',
+    borderRadius: 20,
+    backgroundColor: '#DE7066',
+    paddingVertical: 10,
+    paddingHorizontal: 100,
+  },
+  textReservationButton: {
+    textAlign: 'center',
+    color: '#fff',
+  },
 });
 
 export default ReservationForm;

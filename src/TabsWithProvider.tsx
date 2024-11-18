@@ -20,6 +20,8 @@ import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
 import Octicons from 'react-native-vector-icons/Octicons';
 import Foundation from 'react-native-vector-icons/Foundation';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import HomeScreen from './screens/HomeScreen';
+import ComingSoonScreen from './screens/ComingSoonScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -60,11 +62,11 @@ const Icon = ({ type, name, color, size = 24, style }: IconProps) => {
 }
 
 const TabArr = [
-  { route: 'Início', label: 'Início', type: Icons.Ionicons, activeIcon: 'grid', inActiveIcon: 'grid-outline', component: CalendarReservation },
+  { route: 'Início', label: 'Início', type: Icons.Ionicons, activeIcon: 'grid', inActiveIcon: 'grid-outline', component: ComingSoonScreen },
   { route: 'Reservas', label: 'Reservas', type: Icons.Ionicons, activeIcon: 'calendar-number-sharp', inActiveIcon: 'calendar-number-outline', component: CalendarReservation },
   { route: 'FilesScreen', label: 'FilesScreen', type: Icons.AntDesign, activeIcon: 'addfile', inActiveIcon: 'addfile', component: FilesScreen },
-  { route: 'Apartamentos', label: 'Apartamentos', type: Icons.FontAwesome, activeIcon: 'business', inActiveIcon: 'business-outline', component: FilesScreen },
-  { route: 'Serviços', label: 'Serviços', type: Icons.MaterialCommunityIcons, activeIcon: 'shopping', inActiveIcon: 'shopping-outline', component: FilesScreen },
+  { route: 'Apartamentos', label: 'Apartamentos', type: Icons.FontAwesome, activeIcon: 'business', inActiveIcon: 'business-outline', component: ComingSoonScreen },
+  { route: 'Serviços', label: 'Serviços', type: Icons.MaterialCommunityIcons, activeIcon: 'shopping', inActiveIcon: 'shopping-outline', component: ComingSoonScreen },
 ];
 
 const TabButton = (props) => {
@@ -96,7 +98,7 @@ const TabButton = (props) => {
   )
 }
 
-const TabsWithProvider = ({ rootNavigation }) => {
+const TabsWithProvider = () => {
   return (
     <SharedFilesProvider> {/* Context provider */}
       <Tab.Navigator

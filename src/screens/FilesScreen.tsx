@@ -1,6 +1,6 @@
 // FilesScreen.js
-import React, { useState, useEffect } from 'react';
-import { Text, Alert, Button, ActivityIndicator, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Text, Alert, TouchableOpacity, StyleSheet, ActivityIndicator, View } from 'react-native';
 import Container from '../components/Container';
 import FileLoaderButton from '../components/FileLoaderButton';
 import DatePickerInput from '../components/DatePickerInput';
@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 import { API_URL } from '@env';
 
-const FilesScreen = () => {
+const FilesScreen = ({ navigation }) => {
   const { sharedFiles } = useSharedFiles();
   const [files, setFiles] = useState([]);
   const [apartments, setApartments] = useState([]);
@@ -121,15 +121,23 @@ const FilesScreen = () => {
     }
   };
 
+  const ClearButton = ({ title, onPress }) => {
+    return (
+      <TouchableOpacity style={styles.clearButton} onPress={onPress}>
+        <Text style={styles.textclearButton}>{title}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <Container>
+    <Container >
       {loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#00adf5" /> {/* Loading spinner */}
+          <ActivityIndicator size="large" color="#DE7066" /> {/* Loading spinner */}
           <Text>Carregando...</Text>
         </View>
       ) : files.length > 0 ? (
-        <>
+        <View>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Geração de Reserva</Text>
           <DatePickerInput
             label="Data de Check-In"
@@ -148,18 +156,35 @@ const FilesScreen = () => {
           <ReservationForm
             apartments={apartments}
             reservationData={reservationData}
-            setReservationData={updateReservationData}
+            updateReservationData={updateReservationData}
           />
-          <Button title="Clear Data" onPress={clearReservationData} color="#d9534f" />
-        </>
+          <ClearButton title="Limpar Reserva" onPress={clearReservationData}/>
+        </View>
       ) : (
-        <>
-          <Text style={{ fontSize: 16, textAlign: 'center', marginVertical: 20 }}>Nenhum Arquivo Selecionado</Text>
+        <View>
+          <Text style={{ fontSize: 16, textAlign: 'center', marginVertical: 20 }}>Processar Reserva</Text>
           <FileLoaderButton onFileSelected={onFileSelected} />
-        </>
+        </View>
       )}
     </Container>
   );
 };
 
 export default FilesScreen;
+
+
+const styles = StyleSheet.create({
+  clearButton: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderRadius: 20,
+    borderColor: '#DE7066',
+    backgroundColor: '#fff',
+    padding: 10,
+    width: '82%',
+  },
+  textclearButton: {
+    textAlign: 'center',
+    color: '#DE7066',
+  }
+});
