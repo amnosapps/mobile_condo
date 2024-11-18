@@ -20,7 +20,7 @@ const CalendarReservationManager = () => {
   const fetchReservations = async () => {
     const token = await AsyncStorage.getItem("accessToken");
     try {
-      console.log(token)
+      console.log(API_URL)
       const response = await axios.get(`${API_URL}/api/reservations/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -104,8 +104,8 @@ const CalendarReservationManager = () => {
       onPress={() => navigation.navigate('ReservationDetails', { reservation: item })} // Navigate to details screen
     >
       <View style={{ width: '20%', justifyContent: 'center', alignItems: 'center',}}>
-        <Text style={{ color: '#DC574B', fontWeight: '500'}}>Apto</Text>
-        <Text style={{ color: '#DC574B', fontWeight: '500'}}>{item.room}</Text>
+        <Text style={{ color: '#fff', fontWeight: '500'}}>Apto</Text>
+        <Text style={{ color: '#fff', fontWeight: '500'}}>{item.room}</Text>
       </View>
       <View style={styles.reservationnInfo}>
         <Text style={styles.reservationName}>Hóspede: {item.name}</Text>
@@ -113,7 +113,7 @@ const CalendarReservationManager = () => {
         <View style={styles.dividerLine} />
         
         <View>
-          <Text style={{ color: '#DC574B'}}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</Text>
+          <Text style={{ color: '#fff'}}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -182,11 +182,11 @@ const styles = StyleSheet.create({
     padding: 5,
     width: '100%',           // Set a fixed width
     borderRadius: 10,    // Half of width/height to make it a circle
-    backgroundColor: '#fff', // Optional background color for visibility
+    backgroundColor: '#DE7066', // Optional background color for visibility
     justifyContent: 'center',   // Center content vertically
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#DC574B',
+    borderColor: '#DE7066',
     marginTop: 10
   },
   reservationnInfo: {
@@ -200,11 +200,11 @@ const styles = StyleSheet.create({
   reservationName: {
     fontSize: 15, 
     fontWeight: 'bold', 
-    color: '#DC574B',
+    color: '#fff',
   },
   dividerLine: {
     height: 1,               // Thickness of the line
-    backgroundColor: '#DC574B',  // Color of the line
+    backgroundColor: '#fff',  // Color of the line
     marginVertical: 8,        // Space above and below the line
     width: '100%',            // Makes the line full width
   },

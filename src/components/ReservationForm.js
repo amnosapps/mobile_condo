@@ -8,6 +8,7 @@ import { API_URL } from '@env';
 
 const ReservationForm = ({ apartments, reservationData, updateReservationData }) => {
   const handleSubmit = async () => {
+    console.log(API_URL)
     try {
       const token = await AsyncStorage.getItem('accessToken');
       await axios.post(`${API_URL}/api/reservations/`, reservationData, {

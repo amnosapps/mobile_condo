@@ -51,6 +51,7 @@ const FilesScreen = () => {
   // Fetch apartment options from API
   useEffect(() => {
     const fetchApartments = async () => {
+      console.log(API_URL)
       setLoading(true); // Start loading
       const token = await AsyncStorage.getItem('accessToken');
       try {
@@ -89,6 +90,7 @@ const FilesScreen = () => {
   const onFileSelected = async (file) => {
     setLoading(true); // Start loading when file is selected
     try {
+      console.log(API_URL)
       const fileContent = await RNFS.readFile(file.uri, 'base64');
       const token = await AsyncStorage.getItem('accessToken');
 

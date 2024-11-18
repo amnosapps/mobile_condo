@@ -1,14 +1,14 @@
 // App.tsx
 
 import React, { useState, useEffect, useRef } from 'react';
+import { API_URL } from '@env';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { API_URL } from '@env';
 import AuthenticatedTabs from './src/AuthenticatedTabs';
 import LoginScreen from './src/screens/Login';
-import FilesScreen from './src/screens/FilesScreen';
+import HomeScreen from './src/screens/HomeScreen';
 import ReservationDetailsScreen from './src/components/ReservationDetailsScreen';
 
 const RootStack = createNativeStackNavigator();
@@ -18,6 +18,8 @@ const App = () => {
   const navigationRef = useRef(null); // Reference for navigation
 
   const checkAuthentication = async () => {
+    console.log(API_URL)
+    // const token = null
     const token = await AsyncStorage.getItem('accessToken');
     const refreshToken = await AsyncStorage.getItem('refreshToken');
 
@@ -61,11 +63,14 @@ const App = () => {
             <RootStack.Screen name="ReservationDetails" component={ReservationDetailsScreen} />
           </>
         ) : (
-          <RootStack.Screen
-            name="Login"
-            component={LoginScreen}
-            initialParams={{ onLoginSuccess: handleLoginSuccess }}
-          />
+          <>
+            <RootStack.Screen name="Home" component={HomeScreen} />
+            <RootStack.Screen
+              name="Login"
+              component={LoginScreen}
+              initialParams={{ onLoginSuccess: handleLoginSuccess }}
+            />
+          </>
         )}
       </RootStack.Navigator>
     </NavigationContainer>
