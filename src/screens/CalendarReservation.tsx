@@ -7,10 +7,12 @@ import { parse, format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } fr
 import ptBR from 'date-fns/locale/pt-BR';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@env';
+import { useProfile } from '../ProfileContext';
 import axios from 'axios';
 
-const CalendarReservationManager = () => {
+const CalendarReservationManager = ({ route }) => {
   const navigation = useNavigation();
+  const profile = useProfile()
   const [selectedDate, setSelectedDate] = useState('');
   const [reservations, setReservations] = useState([]);
   const [showWeekly, setShowWeekly] = useState(true);
@@ -20,9 +22,10 @@ const CalendarReservationManager = () => {
   const fetchReservations = async () => {
     const token = await AsyncStorage.getItem("accessToken");
     try {
-      console.log(API_URL)
+      console.log(API_URL, profile)
       const response = await axios.get(`${API_URL}/api/reservations/`, {
         headers: { Authorization: `Bearer ${token}` },
+        params: { condominium: profile.condominiums[0] },
       });
       const formattedData = response.data.reduce((acc, reservation) => {
         const date = format(parseISO(reservation.checkin), 'yyyy-MM-dd', { locale: ptBR });

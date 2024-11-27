@@ -75,7 +75,7 @@ const ReservationForm = ({ apartments, reservationData, updateReservationData })
 };
 
 const styles = StyleSheet.create({
-  formContainer: { padding: 16 },
+  formContainer: { padding: 16, backgroundColor: '#F7F9FC' },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
   input: {
     borderWidth: 1,

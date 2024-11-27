@@ -8,7 +8,7 @@ const ComingSoonScreen = ({ navigation }) => {
           // Clear tokens from AsyncStorage
           await AsyncStorage.removeItem('accessToken');
           await AsyncStorage.removeItem('refreshToken');
-          navigation.navigate('UauthenticatedTabs', { screen: 'Home'})
+          navigation.navigate('Root', { screen: 'Home' });
         } catch (error) {
           console.error('Error during logout:', error);
         }

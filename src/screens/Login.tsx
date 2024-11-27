@@ -14,6 +14,7 @@ const LoginScreen = ({ route }) => {
     const [error, setError] = useState<string | null>(null);
 
     const handleLogin = async () => {
+        console.log(API_URL)
         try {
             const response = await axios.post(`${API_URL}/api/token/`, {
                 username,

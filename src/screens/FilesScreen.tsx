@@ -130,9 +130,9 @@ const FilesScreen = ({ navigation }) => {
   };
 
   return (
-    <Container >
+    <Container>
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ backgroundColor: '#fff', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#DE7066" /> {/* Loading spinner */}
           <Text>Carregando...</Text>
         </View>

@@ -1,11 +1,12 @@
 // TabsWithProvider.tsx
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SharedFilesProvider } from './SharedFilesContext';
 import FilesScreen from './screens/FilesScreen';
 import CalendarReservation from './screens/CalendarReservation';
-import { StyleProp, ViewStyle, StyleSheet, TouchableOpacity } from 'react-native';
+import { ProfileProvider } from './ProfileContext'
+import { StyleProp, ViewStyle, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -22,6 +23,12 @@ import Foundation from 'react-native-vector-icons/Foundation';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import HomeScreen from './screens/HomeScreen';
 import ComingSoonScreen from './screens/ComingSoonScreen';
+import ProfileScreen from './components/Profile';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+
+import { API_URL } from '@env';
+import ApartmentList from './screens/ApartamentScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -65,7 +72,7 @@ const TabArr = [
   { route: 'Início', label: 'Início', type: Icons.Ionicons, activeIcon: 'grid', inActiveIcon: 'grid-outline', component: ComingSoonScreen },
   { route: 'Reservas', label: 'Reservas', type: Icons.Ionicons, activeIcon: 'calendar-number-sharp', inActiveIcon: 'calendar-number-outline', component: CalendarReservation },
   { route: 'FilesScreen', label: 'FilesScreen', type: Icons.AntDesign, activeIcon: 'addfile', inActiveIcon: 'addfile', component: FilesScreen },
-  { route: 'Apartamentos', label: 'Apartamentos', type: Icons.FontAwesome, activeIcon: 'business', inActiveIcon: 'business-outline', component: ComingSoonScreen },
+  { route: 'Apartamentos', label: 'Apartamentos', type: Icons.FontAwesome, activeIcon: 'business', inActiveIcon: 'business-outline', component: ApartmentList },
   { route: 'Serviços', label: 'Serviços', type: Icons.MaterialCommunityIcons, activeIcon: 'shopping', inActiveIcon: 'shopping-outline', component: ComingSoonScreen },
 ];
 
@@ -99,51 +106,79 @@ const TabButton = (props) => {
 }
 
 const TabsWithProvider = () => {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const token = await AsyncStorage.getItem('accessToken');
+      if (!token) {
+        console.warn("No access token found");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${API_URL}/api/profile/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setProfile(response.data);
+        console.log("Fetched profile data:", response.data);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
   return (
     <SharedFilesProvider> {/* Context provider */}
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: '#DC574B',   // Active icon color
-          tabBarInactiveTintColor: 'gray',    // Inactive icon color
-          tabBarStyle: {
-            alignContent: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#fff',       // Tab bar background color
-            position: 'absolute',              // Padding for the tab bar
-            height: 60,                       // Height of the tab bar
-            bottom: 16,
-            left: 16,
-            right: 16,
-            borderRadius: 16,
-            marginLeft: 10,
-            marginRight: 10,
-          },
-          tabBarLabelStyle: {
-            // fontSize: 12,                     // Font size of tab label
-            // fontWeight: '500',               // Font weight of tab label
-          },
-        })}
-      >
-        {TabArr.map((item, index) => {
-          return (
-            <Tab.Screen key={index} name={item.route} component={item.component}
-              options={{
-                tabBarShowLabel: false,
-                tabBarIcon: ({color, focused}) => (
-                  <Icon type={item.type} name={focused ? item.activeIcon : item.inActiveIcon} color={color}  />
-                ),
-                tabBarButton: (props) => <TabButton {...props} item={item}/>
-              }}
-            />
-          )
-        })}
-        {/* <Tab.Screen name="Início" component={CalendarReservation} />
-        <Tab.Screen name="Reservas" component={CalendarReservation} />
-        <Tab.Screen name="FilesScreen" component={FilesScreen} />
-        <Tab.Screen name="Apartamentos" component={FilesScreen} />
-        <Tab.Screen name="Serviços" component={CalendarReservation} /> */}
-      </Tab.Navigator>
+      <ProfileScreen profile={profile} />
+      <ProfileProvider profile={profile} >
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            headerShown: false,
+            tabBarActiveTintColor: '#DC574B',   // Active icon color
+            tabBarInactiveTintColor: 'gray',    // Inactive icon color
+            tabBarStyle: {
+              alignContent: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#fff',       // Tab bar background color
+              position: 'absolute',              // Padding for the tab bar
+              height: 60,                       // Height of the tab bar
+              bottom: 16,
+              left: 16,
+              right: 16,
+              borderRadius: 16,
+              marginLeft: 10,
+              marginRight: 10,
+            },
+            tabBarLabelStyle: {
+              // fontSize: 12,                     // Font size of tab label
+              // fontWeight: '500',               // Font weight of tab label
+            },
+          })}
+        >
+          {TabArr.map((item, index) => {
+            return (
+              <Tab.Screen key={index} name={item.route} component={item.component}
+                options={{
+                  tabBarShowLabel: false,
+                  tabBarIcon: ({color, focused}) => (
+                    <Icon type={item.type} name={focused ? item.activeIcon : item.inActiveIcon} color={color}  />
+                  ),
+                  tabBarButton: (props) => <TabButton {...props} item={item}/>
+                }}
+                initialParams={{profile: profile}}
+              />
+            )
+          })}
+        </Tab.Navigator>
+      </ProfileProvider>
     </SharedFilesProvider>
   );
 };

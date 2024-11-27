@@ -10,6 +10,7 @@ import AuthenticatedTabs from './src/AuthenticatedTabs';
 import LoginScreen from './src/screens/Login';
 import HomeScreen from './src/screens/HomeScreen';
 import ReservationDetailsScreen from './src/components/ReservationDetailsScreen';
+import ComingSoonScreen from './src/screens/ComingSoonScreen';
 
 const RootStack = createNativeStackNavigator();
 
@@ -18,7 +19,7 @@ const App = () => {
   const navigationRef = useRef(null); // Reference for navigation
 
   const checkAuthentication = async () => {
-    console.log(API_URL)
+    console.log(API_URL, '----------')
     // const token = null
     const token = await AsyncStorage.getItem('accessToken');
     const refreshToken = await AsyncStorage.getItem('refreshToken');
@@ -61,6 +62,7 @@ const App = () => {
           <>
             <RootStack.Screen name="AuthenticatedTabs" component={AuthenticatedTabs} />
             <RootStack.Screen name="ReservationDetails" component={ReservationDetailsScreen} />
+            <RootStack.Screen name="ComingSoon" component={ComingSoonScreen} />
           </>
         ) : (
           <>
