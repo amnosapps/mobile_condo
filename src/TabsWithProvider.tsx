@@ -70,8 +70,8 @@ const Icon = ({ type, name, color, size = 24, style }: IconProps) => {
 }
 
 const TabArr = [
-  { route: 'Reservas', label: 'Reservas', type: Icons.Ionicons, activeIcon: 'calendar-number-sharp', inActiveIcon: 'calendar-number-outline', component: CalendarReservation },
   { route: 'FilesScreen', label: 'FilesScreen', type: Icons.AntDesign, activeIcon: 'addfile', inActiveIcon: 'addfile', component: FilesScreen },
+  { route: 'Reservas', label: 'Reservas', type: Icons.Ionicons, activeIcon: 'calendar-number-sharp', inActiveIcon: 'calendar-number-outline', component: CalendarReservation },
   { route: 'Apartamentos', label: 'Apartamentos', type: Icons.FontAwesome, activeIcon: 'business', inActiveIcon: 'business-outline', component: ApartmentList },
   { route: 'Serviços', label: 'Serviços', type: Icons.MaterialCommunityIcons, activeIcon: 'shopping', inActiveIcon: 'shopping-outline', component: ServicesScreen },
 ];

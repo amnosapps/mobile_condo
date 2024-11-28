@@ -21,9 +21,9 @@ const CalendarReservationManager = ({ route }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   const fetchReservations = async () => {
+    console.log(API_URL, profile)
     const token = await AsyncStorage.getItem("accessToken");
     try {
-      console.log(API_URL, profile)
       const response = await axios.get(`${API_URL}/api/reservations/`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { condominium: profile.condominiums[0] },
@@ -108,8 +108,8 @@ const CalendarReservationManager = ({ route }) => {
       onPress={() => navigation.navigate('ReservationDetails', { reservation: item })} // Navigate to details screen
     >
       <View style={{ width: '20%', justifyContent: 'center', alignItems: 'center',}}>
-        <Text style={{ color: '#fff', fontWeight: '500'}}>Apto</Text>
-        <Text style={{ color: '#fff', fontWeight: '500'}}>{item.room}</Text>
+        <Text style={{ color: '#DE7066', fontWeight: '500'}}>Apto</Text>
+        <Text style={{ color: '#DE7066', fontWeight: '500'}}>{item.room}</Text>
       </View>
       <View style={styles.reservationnInfo}>
         <Text style={styles.reservationName}>Hóspede: {item.name}</Text>
@@ -117,7 +117,7 @@ const CalendarReservationManager = ({ route }) => {
         <View style={styles.dividerLine} />
         
         <View>
-          <Text style={{ color: '#fff'}}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</Text>
+          <Text style={{ color: '#DE7066'}}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -187,10 +187,10 @@ const styles = StyleSheet.create({
     padding: 5,
     width: '100%',           // Set a fixed width
     borderRadius: 10,    // Half of width/height to make it a circle
-    backgroundColor: '#DE7066', // Optional background color for visibility
+    backgroundColor: '#fff', // Optional background color for visibility
     justifyContent: 'center',   // Center content vertically
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#DE7066',
     marginTop: 10
   },
@@ -205,11 +205,11 @@ const styles = StyleSheet.create({
   reservationName: {
     fontSize: 15, 
     fontWeight: 'bold', 
-    color: '#fff',
+    color: '#DE7066',
   },
   dividerLine: {
     height: 1,               // Thickness of the line
-    backgroundColor: '#fff',  // Color of the line
+    backgroundColor: '#DE7066',  // Color of the line
     marginVertical: 8,        // Space above and below the line
     width: '100%',            // Makes the line full width
   },
