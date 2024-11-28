@@ -5,14 +5,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { API_URL } from '@env';
 import { useProfile } from '../ProfileContext';
+import Profile from '../components/Profile';
 
 const ApartmentList = ({ route }) => {
-    const profile = useProfile()
+  const profile = useProfile();
   const [apartments, setApartments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log(API_URL, profile)
+    console.log(API_URL, profile);
     const fetchApartments = async () => {
       const token = await AsyncStorage.getItem('accessToken');
       if (!token) {
@@ -47,13 +48,28 @@ const ApartmentList = ({ route }) => {
       2: '#ffce56', // Maintenance
     };
 
+    const statusLabels = {
+      0: "Disponível",
+      1: "Ocupado",
+      2: "Manutenção",
+    };
+
     return (
       <TouchableOpacity
-        style={[styles.card, { backgroundColor: statusColors[item.status] || '#ddd' }]}
+        style={styles.card}
         onPress={() => console.log(`Selected Apartment ${item.number}`)} // Placeholder for card press action
       >
-        <Text style={styles.apartmentInfo}>Apartamento: {item.number}</Text>
-        <Text style={styles.apartmentDetails}>Status: {item.status === 0 ? "Disponível" : item.status === 1 ? "Ocupado" : "Manutenção"}</Text>
+        <View style={styles.cardHeader}>
+          <Text style={styles.apartmentNumber}>Apartamento: {item.number}</Text>
+          <Text
+            style={[
+              styles.apartmentStatus,
+              { color: statusColors[item.status] || '#000' },
+            ]}
+          >
+            {statusLabels[item.status]}
+          </Text>
+        </View>
         <Text style={styles.apartmentDetails}>Tipo: {item.type}</Text>
         <Text style={styles.apartmentDetails}>Capacidade: {item.max_occupation}</Text>
       </TouchableOpacity>
@@ -64,13 +80,14 @@ const ApartmentList = ({ route }) => {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#DE7066" />
-        <Text style={styles.loaderText}>Loading Apartments...</Text>
+        <Text style={styles.loaderText}>Carregando apartamentos...</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <Profile profile={profile} />
       <FlatList
         data={apartments}
         keyExtractor={(item) => item.id.toString()}
@@ -84,31 +101,44 @@ const ApartmentList = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#F4F4F4', // Light gray for the background
     padding: 10,
   },
   listContainer: {
     paddingBottom: 20,
   },
   card: {
+    backgroundColor: '#FFFFFF', // White card
     padding: 15,
     marginBottom: 10,
-    borderRadius: 8,
+    borderRadius: 10,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
+    borderColor: '#EDEDED',
+    borderWidth: 1,
   },
-  apartmentInfo: {
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  apartmentNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
+    color: '#333',
+  },
+  apartmentStatus: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   apartmentDetails: {
     fontSize: 14,
-    color: '#fff',
+    color: '#666',
+    marginTop: 4,
   },
   loaderContainer: {
     flex: 1,

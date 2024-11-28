@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@env';
 import { useProfile } from '../ProfileContext';
 import axios from 'axios';
+import Profile from '../components/Profile';
 
 const CalendarReservationManager = ({ route }) => {
   const navigation = useNavigation();
@@ -132,6 +133,7 @@ const CalendarReservationManager = ({ route }) => {
 
   return (
     <View style={styles.container}>
+      <Profile profile={profile} />
       {/* <CustomButton title="Atualizar" onPress={fetchReservations} /> */}
       <Calendar
         onDayPress={(day) => {

@@ -10,14 +10,24 @@ const ReservationForm = ({ apartments, reservationData, updateReservationData })
   const handleSubmit = async () => {
     console.log(API_URL)
     try {
-      const token = await AsyncStorage.getItem('accessToken');
-      await axios.post(`${API_URL}/api/reservations/`, reservationData, {
-        headers: { Authorization: `Bearer ${token}` },
+      console.log(reservationData)
+      const formData = new FormData();
+      Object.keys(reservationData).forEach(key => {
+        formData.append(key, reservationData[key]);
       });
-      Alert.alert("Success", "Reservation created successfully!");
+      
+      const token = await AsyncStorage.getItem('accessToken');
+      await axios.post(`${API_URL}/api/reservations/`, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        
+      });
+      Alert.alert("Success", "Reserva registrada com sucesso!");
     } catch (error) {
-      Alert.alert("Error", "Failed to create reservation. Please try again.");
-      console.error("Failed to create reservation", error);
+      Alert.alert("Alerta", String(error.response.data.message));
+      console.error("Failed to create reservation", error.response.data.message);
     }
   };
 

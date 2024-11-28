@@ -29,6 +29,7 @@ import axios from 'axios';
 
 import { API_URL } from '@env';
 import ApartmentList from './screens/ApartamentScreen';
+import ServicesScreen from './screens/ServicesScreen';
 
 
 const Tab = createBottomTabNavigator();
@@ -69,11 +70,10 @@ const Icon = ({ type, name, color, size = 24, style }: IconProps) => {
 }
 
 const TabArr = [
-  { route: 'Início', label: 'Início', type: Icons.Ionicons, activeIcon: 'grid', inActiveIcon: 'grid-outline', component: ComingSoonScreen },
   { route: 'Reservas', label: 'Reservas', type: Icons.Ionicons, activeIcon: 'calendar-number-sharp', inActiveIcon: 'calendar-number-outline', component: CalendarReservation },
   { route: 'FilesScreen', label: 'FilesScreen', type: Icons.AntDesign, activeIcon: 'addfile', inActiveIcon: 'addfile', component: FilesScreen },
   { route: 'Apartamentos', label: 'Apartamentos', type: Icons.FontAwesome, activeIcon: 'business', inActiveIcon: 'business-outline', component: ApartmentList },
-  { route: 'Serviços', label: 'Serviços', type: Icons.MaterialCommunityIcons, activeIcon: 'shopping', inActiveIcon: 'shopping-outline', component: ComingSoonScreen },
+  { route: 'Serviços', label: 'Serviços', type: Icons.MaterialCommunityIcons, activeIcon: 'shopping', inActiveIcon: 'shopping-outline', component: ServicesScreen },
 ];
 
 const TabButton = (props) => {
@@ -137,7 +137,9 @@ const TabsWithProvider = () => {
 
   return (
     <SharedFilesProvider> {/* Context provider */}
-      <ProfileScreen profile={profile} />
+      {/* <View style={{ flex: 1, backgroundColor: 'transparent' }}> */}
+        {/* <ProfileScreen profile={profile} /> */}
+      {/* </View> */}
       <ProfileProvider profile={profile} >
         <Tab.Navigator
           screenOptions={({ route }) => ({
