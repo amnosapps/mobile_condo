@@ -20,6 +20,7 @@ const LoginScreen = ({ route }) => {
                 username,
                 password,
             }).catch();
+            console.log(response)
 
             await AsyncStorage.setItem('accessToken', response.data.access);
             await AsyncStorage.setItem('refreshToken', response.data.refresh);
@@ -27,7 +28,7 @@ const LoginScreen = ({ route }) => {
             if (onLoginSuccess) onLoginSuccess();
         } catch (err) {
             console.error(err)
-            setError('Login failed, please check your credentials.');
+            setError('Falha ao efetuar login.');
         }
     };
 
