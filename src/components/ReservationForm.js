@@ -6,16 +6,18 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@env';
 
-const ReservationForm = ({ apartments, reservationData, updateReservationData }) => {
+const ReservationForm = ({ apartments, reservationData, updateReservationData, clearReservationData }) => {
   const handleSubmit = async () => {
     console.log(API_URL)
     try {
-      console.log(reservationData)
+      reservationData.checkin = new Date(`${reservationData.checkin}T14:00:00Z`).toISOString();
+      reservationData.checkout = new Date(`${reservationData.checkout}T11:00:00Z`).toISOString();
+      
       const formData = new FormData();
       Object.keys(reservationData).forEach(key => {
         formData.append(key, reservationData[key]);
       });
-      
+
       const token = await AsyncStorage.getItem('accessToken');
       await axios.post(`${API_URL}/api/reservations/`, formData, {
         headers: { 
@@ -24,8 +26,13 @@ const ReservationForm = ({ apartments, reservationData, updateReservationData })
         },
         
       });
-      Alert.alert("Success", "Reserva registrada com sucesso!");
+
+      Alert.alert("Success", "Reserva registrada com sucesso!")
+
+      clearReservationData()
+      // navigation.navigate('AuthenticatedTabs', { screen: 'Reservas'})
     } catch (error) {
+      console.log(error)
       Alert.alert("Alerta", String(error.response.data.message));
       console.error("Failed to create reservation", error.response.data.message);
     }
@@ -85,7 +92,7 @@ const ReservationForm = ({ apartments, reservationData, updateReservationData })
 };
 
 const styles = StyleSheet.create({
-  formContainer: { padding: 16, backgroundColor: '#F7F9FC' },
+  formContainer: { padding: 16, backgroundColor: '#f4f4f4' },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },
   input: {
     borderWidth: 1,

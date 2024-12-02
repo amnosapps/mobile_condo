@@ -19,7 +19,7 @@ const App = () => {
   const navigationRef = useRef(null); // Reference for navigation
 
   const checkAuthentication = async () => {
-    console.log(API_URL, '----------')
+    console.log(API_URL)
     // const token = null
     const token = await AsyncStorage.getItem('accessToken');
     const refreshToken = await AsyncStorage.getItem('refreshToken');

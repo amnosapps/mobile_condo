@@ -42,6 +42,8 @@ const FilesScreen = ({ navigation }) => {
           guests: firstFile.extractedData.guests || 1,
           apartment: '',
           has_children: false,
+          // checkinHour: '14:00', // Hard-coded check-in hour
+          // checkoutHour: '11:00', // Hard-coded check-out hour
         }));
         setLoading(false); // Stop loading
       }
@@ -132,31 +134,32 @@ const FilesScreen = ({ navigation }) => {
   return (
     <Container>
       {loading ? (
-        <View style={{ backgroundColor: '#fff', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ backgroundColor: 'transparent', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color="#DE7066" /> {/* Loading spinner */}
           <Text>Carregando...</Text>
         </View>
       ) : files.length > 0 ? (
-        <View>
+        <View style={{ backgroundColor: 'transparent' }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Geração de Reserva</Text>
           <DatePickerInput
             label="Data de Check-In"
             dateValue={reservationData.checkin}
             onDateChange={(date) => updateReservationData('checkin', date)}
-            hourValue={reservationData.checkinHour}
-            onHourChange={(hour) => updateReservationData('checkinHour', hour)}
+            hourValue={'14:00'}
+            // onHourChange={(hour) => updateReservationData('checkinHour', hour)}
           />
           <DatePickerInput
             label="Data de Check-Out"
             dateValue={reservationData.checkout}
             onDateChange={(date) => updateReservationData('checkout', date)}
-            hourValue={reservationData.checkoutHour}
-            onHourChange={(hour) => updateReservationData('checkoutHour', hour)}
+            hourValue={'11:00'}
+            // onHourChange={(hour) => updateReservationData('checkoutHour', hour)}
           />
           <ReservationForm
             apartments={apartments}
             reservationData={reservationData}
             updateReservationData={updateReservationData}
+            clearReservationData={clearReservationData}
           />
           <ClearButton title="Limpar Reserva" onPress={clearReservationData}/>
         </View>

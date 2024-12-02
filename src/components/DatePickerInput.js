@@ -14,9 +14,9 @@ const DatePickerInput = ({ label, dateValue, onDateChange, hourValue, onHourChan
       <Text>{label}:</Text>
       <View style={styles.dateTimeRow}>
         <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-          <TextInput style={styles.input} value={dateValue} placeholder="YYYY-MM-DD HH:MM" editable={false} />
+          <TextInput style={styles.input} value={dateValue} placeholder="YYYY-MM-DD" editable={false} />
         </TouchableOpacity>
-        <Picker selectedValue={hourValue} style={styles.hourPicker} onValueChange={onHourChange}>
+        <Picker enabled={false} selectedValue={hourValue} style={styles.hourPicker} onValueChange={onHourChange}>
           {hours.map((hour) => (
             <Picker.Item key={hour} label={hour} value={hour} />
           ))}
@@ -38,8 +38,8 @@ const DatePickerInput = ({ label, dateValue, onDateChange, hourValue, onHourChan
 };
 
 const styles = StyleSheet.create({
-  dateTimeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 5, borderRadius: 4, flex: 1 },
+  dateTimeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, justifyContent: 'space-between' },
+  input: { borderWidth: 1, borderColor: '#ddd', padding: 15, borderRadius: 4, flex: 1 },
   hourPicker: { height: 50, width: 120, marginLeft: 8 },
 });
 
