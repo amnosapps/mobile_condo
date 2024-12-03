@@ -3,13 +3,22 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
-import { parse, format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO } from 'date-fns';
+import { parse, format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isValid } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@env';
 import { useProfile } from '../ProfileContext';
 import axios from 'axios';
 import Profile from '../components/Profile';
+import CalendarWithCustomLocalization from '../components/CalendarWithCustomWeekdays';
+
+const ptBRCalendarConfig = {
+  months: [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ],
+  weekdays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+};
 
 const CalendarReservationManager = ({ route }) => {
   const navigation = useNavigation();
@@ -35,8 +44,8 @@ const CalendarReservationManager = ({ route }) => {
           id: reservation.id,
           name: reservation.guest_name,
           room: reservation.apt_number,
-          checkIn: format(parseISO(reservation.checkin), 'PPPp', { locale: ptBR }),
-          checkOut: format(parseISO(reservation.checkout), 'PPPp', { locale: ptBR }),
+          checkin: format(parseISO(reservation.checkin), 'PPPp', { locale: ptBR }),
+          checkout: format(parseISO(reservation.checkout), 'PPPp', { locale: ptBR }),
         });
         return acc;
       }, {});
@@ -47,11 +56,35 @@ const CalendarReservationManager = ({ route }) => {
     }
   };
 
-  const generateMarkedDates = () => {
+
+  const generateMarkedDates = (reservationsData, selectedDate) => {
     const markedDates = {};
-    Object.keys(reservationsData).forEach((date) => {
-      markedDates[date] = { marked: true, dotColor: '#DE7066' };
+  
+    Object.values(reservationsData).forEach((reservations) => {
+      reservations.forEach((reservation) => {
+        try {
+          // Parse the custom formatted checkin and checkout dates
+          const checkinDate = parse(reservation.checkin, "d 'de' MMMM 'de' yyyy 'às' HH:mm", new Date(), { locale: ptBR });
+          const checkoutDate = parse(reservation.checkout, "d 'de' MMMM 'de' yyyy 'às' HH:mm", new Date(), { locale: ptBR });
+  
+          // Generate all dates between checkin and checkout
+          const datesInRange = eachDayOfInterval({ start: checkinDate, end: checkoutDate });
+  
+          datesInRange.forEach((date) => {
+            const formattedDate = format(date, 'yyyy-MM-dd');
+            markedDates[formattedDate] = {
+              marked: true,
+              dotColor: '#DE7066',
+              color: '#FFF7F4',
+            };
+          });
+        } catch (error) {
+          console.error('Error parsing reservation dates:', reservation, error);
+        }
+      });
     });
+  
+    // Highlight the selected date
     if (selectedDate) {
       markedDates[selectedDate] = {
         ...markedDates[selectedDate],
@@ -59,8 +92,10 @@ const CalendarReservationManager = ({ route }) => {
         selectedColor: '#DE7066',
       };
     }
+  
     return markedDates;
   };
+
 
   const getWeeklyReservations = (data) => {
     const today = new Date();
@@ -117,7 +152,7 @@ const CalendarReservationManager = ({ route }) => {
         <View style={styles.dividerLine} />
         
         <View>
-          <Text style={{ color: '#DE7066'}}>{formatDate(item.checkIn)} - {formatDate(item.checkOut)}</Text>
+          <Text style={{ color: '#DE7066'}}>{formatDate(item.checkin)} - {formatDate(item.checkout)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -134,19 +169,11 @@ const CalendarReservationManager = ({ route }) => {
   return (
     <View style={styles.container}>
       <Profile profile={profile} />
-      {/* <CustomButton title="Atualizar" onPress={fetchReservations} /> */}
-      <Calendar
+
+      <CalendarWithCustomLocalization
+        reservations={generateMarkedDates(reservationsData, selectedDate)}
         onDayPress={(day) => {
           setSelectedDate(day.dateString === selectedDate ? '' : day.dateString);
-        }}
-        markedDates={generateMarkedDates()}
-        monthFormat={'MMMM yyyy'}
-        theme={{
-          todayTextColor: '#DE7066',
-          monthTextColor: '#DE7066',
-          arrowColor: '#DE7066',
-          textMonthFontWeight: 'bold',
-          textDayHeaderFontWeight: 'bold',
         }}
       />
       

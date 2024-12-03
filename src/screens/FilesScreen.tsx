@@ -24,6 +24,7 @@ const FilesScreen = ({ navigation }) => {
     apartment: '',
     guests: 1,
     has_children: false,
+    reservation_file: '',
   });
 
   // Load data from `sharedFiles` when it changes
@@ -33,8 +34,10 @@ const FilesScreen = ({ navigation }) => {
       const firstFile = sharedFiles[0];
       if (firstFile && firstFile.extractedData) {
         setLoading(true); // Start loading
+        console.log(firstFile.extractedData.check_in)
         setReservationData((prevData) => ({
           ...prevData,
+          reservation_file: firstFile.extractedData.base64_pdf || '',
           checkin: firstFile.extractedData.check_in || '',
           checkout: firstFile.extractedData.check_out || '',
           guest_name: firstFile.extractedData.guest_name || '',
@@ -42,8 +45,6 @@ const FilesScreen = ({ navigation }) => {
           guests: firstFile.extractedData.guests || 1,
           apartment: '',
           has_children: false,
-          // checkinHour: '14:00', // Hard-coded check-in hour
-          // checkoutHour: '11:00', // Hard-coded check-out hour
         }));
         setLoading(false); // Stop loading
       }
@@ -112,6 +113,7 @@ const FilesScreen = ({ navigation }) => {
           guests: response.data.guests || 1,
           apartment: '',
           has_children: false,
+          reservation_file: response.data.base64_pdf
         }));
         setFiles([file]);
       }

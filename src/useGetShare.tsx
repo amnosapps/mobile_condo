@@ -20,7 +20,6 @@ export type ShareFile = {
 };
 
 export const useGetShare = (navigation) => {
-  console.log(navigation)
   const [share, setShare] = useState<ShareFile[] | undefined>(undefined);
 
   // Automatic file loading on app start when a file is shared
@@ -52,6 +51,7 @@ export const useGetShare = (navigation) => {
         if (file.mimeType === 'application/pdf' && file.filePath) {
           const content = await readPDFContent(file.filePath);
           const extractedData = await extractDataFromLocalAPI(content);
+          console.log(extractedData)
           return { ...file, content, extractedData };
         }
         return file;
