@@ -1,9 +1,8 @@
-// CalendarReservationManager.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
-import { parse, format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isValid } from 'date-fns';
+import { parse, format, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, formatDate } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '@env';
@@ -12,40 +11,32 @@ import axios from 'axios';
 import Profile from '../components/Profile';
 import CalendarWithCustomLocalization from '../components/CalendarWithCustomWeekdays';
 
-const ptBRCalendarConfig = {
-  months: [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-  ],
-  weekdays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
-};
-
 const CalendarReservationManager = ({ route }) => {
   const navigation = useNavigation();
-  const profile = useProfile()
+  const profile = useProfile();
   const [selectedDate, setSelectedDate] = useState('');
   const [reservations, setReservations] = useState([]);
-  const [showWeekly, setShowWeekly] = useState(true);
   const [reservationsData, setReservationsData] = useState({});
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchReservations = async () => {
-    console.log(API_URL, profile)
-    const token = await AsyncStorage.getItem("accessToken");
+    const token = await AsyncStorage.getItem('accessToken');
     try {
       const response = await axios.get(`${API_URL}/api/reservations/`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { condominium: profile.condominiums[0] },
       });
+
       const formattedData = response.data.reduce((acc, reservation) => {
-        const date = format(parseISO(reservation.checkin), 'yyyy-MM-dd', { locale: ptBR });
-        if (!acc[date]) acc[date] = [];
-        acc[date].push({
+        const checkin = format(parseISO(reservation.checkin), 'yyyy-MM-dd', { locale: ptBR });
+        const checkout = format(parseISO(reservation.checkout), 'yyyy-MM-dd', { locale: ptBR });
+        if (!acc[checkin]) acc[checkin] = [];
+        acc[checkin].push({
           id: reservation.id,
           name: reservation.guest_name,
           room: reservation.apt_number,
-          checkin: format(parseISO(reservation.checkin), 'PPPp', { locale: ptBR }),
-          checkout: format(parseISO(reservation.checkout), 'PPPp', { locale: ptBR }),
+          checkin: reservation.checkin,
+          checkout: reservation.checkout,
         });
         return acc;
       }, {});
@@ -56,20 +47,21 @@ const CalendarReservationManager = ({ route }) => {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchReservations();
+    setRefreshing(false);
+  };
 
   const generateMarkedDates = (reservationsData, selectedDate) => {
     const markedDates = {};
-  
     Object.values(reservationsData).forEach((reservations) => {
       reservations.forEach((reservation) => {
         try {
-          // Parse the custom formatted checkin and checkout dates
-          const checkinDate = parse(reservation.checkin, "d 'de' MMMM 'de' yyyy 'às' HH:mm", new Date(), { locale: ptBR });
-          const checkoutDate = parse(reservation.checkout, "d 'de' MMMM 'de' yyyy 'às' HH:mm", new Date(), { locale: ptBR });
-  
-          // Generate all dates between checkin and checkout
+          const checkinDate = parseISO(reservation.checkin);
+          const checkoutDate = parseISO(reservation.checkout);
           const datesInRange = eachDayOfInterval({ start: checkinDate, end: checkoutDate });
-  
+
           datesInRange.forEach((date) => {
             const formattedDate = format(date, 'yyyy-MM-dd');
             markedDates[formattedDate] = {
@@ -83,8 +75,7 @@ const CalendarReservationManager = ({ route }) => {
         }
       });
     });
-  
-    // Highlight the selected date
+
     if (selectedDate) {
       markedDates[selectedDate] = {
         ...markedDates[selectedDate],
@@ -92,10 +83,8 @@ const CalendarReservationManager = ({ route }) => {
         selectedColor: '#F46600',
       };
     }
-  
     return markedDates;
   };
-
 
   const getWeeklyReservations = (data) => {
     const today = new Date();
@@ -112,6 +101,11 @@ const CalendarReservationManager = ({ route }) => {
     );
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return null
+    return format(dateString, "dd/MM HH:mm");
+  };
+
   useEffect(() => {
     fetchReservations();
   }, []);
@@ -122,84 +116,53 @@ const CalendarReservationManager = ({ route }) => {
         ...reservation,
         date: selectedDate,
       })));
-      setShowWeekly(false);
     } else {
       setReservations(getWeeklyReservations(reservationsData));
-      setShowWeekly(true);
     }
   }, [selectedDate, reservationsData]);
 
-  const formatDate = (dateString) => {
-    // Parse the date string with `parse`
-    const parsedDate = parse(dateString, "dd 'de' MMMM 'de' yyyy 'às' HH:mm", new Date(), { locale: ptBR });
-    
-    // Format to the desired output
-    return format(parsedDate, "dd/MM HH:mm");
-  };
-
   const renderReservation = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.reservationItem}
-      onPress={() => navigation.navigate('ReservationDetails', { reservation: item })} // Navigate to details screen
+      onPress={() => navigation.navigate('ReservationDetails', { reservation: item })}
     >
-      <View style={{ width: '30%', justifyContent: 'center', alignItems: 'center',}}>
-        <Text style={{ color: '#fff', fontWeight: '500'}}>Apto</Text>
-        <Text style={{ color: '#fff', fontWeight: '500'}}>{item.room}</Text>
+      <View style={{ width: '30%', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: '#fff', fontWeight: '500' }}>Apto</Text>
+        <Text style={{ color: '#fff', fontWeight: '500' }}>{item.room}</Text>
       </View>
-      <View style={styles.reservationnInfo}>
+      <View style={styles.reservationInfo}>
         <Text style={styles.reservationName}>Hóspede: {item.name}</Text>
         <View style={styles.dividerLine} />
-        <View>
-          <Text style={{ color: '#fff'}}>{formatDate(item.checkin)} - {formatDate(item.checkout)}</Text>
-        </View>
+        <Text style={{ color: '#fff' }}>{formatDate(item.checkin)} - {formatDate(item.checkout)}</Text>
       </View>
-      {/* <View style={{ width: '20%', justifyContent: 'center', alignItems: 'center',}}>
-        <Text style={{ color: '#fff', fontWeight: '500'}}>Apto</Text>
-      </View> */}
     </TouchableOpacity>
   );
-
-  const CustomButton = ({ title, onPress }) => {
-    return (
-      <TouchableOpacity style={styles.addReservationButton} onPress={onPress}>
-        <Text style={styles.textReservationButton}>{title}</Text>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <View style={styles.container}>
       <Profile profile={profile} />
-
       <CalendarWithCustomLocalization
         reservations={generateMarkedDates(reservationsData, selectedDate)}
         onDayPress={(day) => {
           setSelectedDate(day.dateString === selectedDate ? '' : day.dateString);
         }}
       />
-      
       <View style={styles.reservationHeader}>
         <Text style={styles.dateText}>
           {selectedDate
             ? `Reservas em ${format(parseISO(selectedDate), "EEE, dd/MM", { locale: ptBR })}`
-            : 'Reservas da Semana'
-          }
+            : 'Reservas da Semana'}
         </Text>
-        <CustomButton
-          title="+" 
-          onPress={() => navigation.navigate('FilesScreen')} // Navigate to FilesScreen
-        />
       </View>
-      
-      {reservations.length > 0 ? (
-        <FlatList
-          data={reservations}
-          keyExtractor={(item) => item.id}
-          renderItem={renderReservation}
-        />
-      ) : (
-        <Text style={styles.noReservationText}>Sem reservas para esta data</Text>
-      )}
+      <FlatList
+        data={reservations}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderReservation}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={
+          <Text style={styles.noReservationText}>Sem checkin's para essa data</Text>
+        }
+      />
     </View>
   );
 };
@@ -208,44 +171,30 @@ export default CalendarReservationManager;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#F9FAFB' },
-  reservationHeader: { display: 'flex', flexDirection: 'row', alignContent: 'center', alignItems: 'center', marginTop: 10 },
-  dateText: { fontSize: 16, fontWeight: '400', marginVertical: 10, width: '80%', },
-  addReservationButton: { width: '20%', backgroundColor: '#F46600', borderRadius: 30},
-  textReservationButton: { textAlign: 'center', color: 'white', fontSize: 15 },
+  reservationHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+  dateText: { fontSize: 16, fontWeight: '400', marginVertical: 10, width: '80%' },
   reservationItem: {
-    display: 'flex',
     flexDirection: 'row',
-    padding: 5,
-    width: '100%',           // Set a fixed width
-    borderRadius: 4, 
-    backgroundColor: '#F46600', // Optional background color for visibility
-    justifyContent: 'center',   // Center content vertically
-    alignItems: 'center',
-    borderWidth: 0.5,
-    borderColor: '#F46600',
-    marginTop: 10
-  },
-  reservationnInfo: {
-    width: '50%', 
-    borderRadius: 5,
-    // backgroundColor: '#FFD7C6', 
-    justifyContent: 'center',   // Center content vertically
-    height: 70,
     padding: 10,
+    borderRadius: 4,
+    backgroundColor: '#F46600',
+    alignItems: 'center',
+    marginBottom: 10,
+  
+    // Shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  
+    // Elevation for Android
+    elevation: 5,
   },
-  reservationName: {
-    fontSize: 15, 
-    fontWeight: 'bold', 
-    color: '#fff',
-  },
-  dividerLine: {
-    height: 1,               // Thickness of the line
-    backgroundColor: '#fff',  // Color of the line
-    marginVertical: 8,        // Space above and below the line
-    width: '100%',            // Makes the line full width
-  },
-  noReservationText: { 
-    textAlign: 'center', 
-    marginTop: 20, fontSize: 16, color: '#888' 
-  },
+  reservationInfo: { flex: 1, paddingHorizontal: 10 },
+  reservationName: { fontSize: 15, fontWeight: 'bold', color: '#fff' },
+  dividerLine: { height: 1, backgroundColor: '#fff', marginVertical: 8 },
+  noReservationText: { textAlign: 'center', marginTop: 20, fontSize: 16, color: '#888' },
 });

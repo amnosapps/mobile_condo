@@ -74,13 +74,13 @@ const Profile = ({ profile }) => {
     try {
       await AsyncStorage.removeItem('accessToken');
       await AsyncStorage.removeItem('refreshToken');
-      navigation.navigate('Root', { screen: 'Home' });
+      navigation.navigate('Home');
     } catch (error) {
       console.error('Error during logout:', error);
     }
   };
 
-  const userInitial = profile?.user?.charAt(0)?.toUpperCase() || "?";
+  const userInitial = profile?.name?.charAt(0)?.toUpperCase() || "?";
 
   return (
     <View style={styles.profileContainer}>
@@ -90,7 +90,7 @@ const Profile = ({ profile }) => {
           <Text style={styles.avatarText}>{userInitial}</Text>
         </View>
         <View style={styles.profileInfo}>
-          <Text style={styles.userName}>Olá, {profile?.user || "Usuário Desconhecido"}!</Text>
+          <Text style={styles.userName}>Olá, {profile?.name || "Usuário Desconhecido"}!</Text>
           <Text style={styles.condoName}>
             {profile?.condominiums?.[0] || "Condomínio Não Informado"}
           </Text>

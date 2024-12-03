@@ -207,8 +207,8 @@ const ReservationDetailsScreen = ({ route, navigation }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Loading reservation details...</Text>
+        <ActivityIndicator size="large" color="#F46600" />
+        <Text>Carregando reserva...</Text>
       </View>
     );
   }
@@ -216,7 +216,7 @@ const ReservationDetailsScreen = ({ route, navigation }) => {
   if (!reservationData) {
     return (
       <View style={styles.errorContainer}>
-        <Text>Failed to load reservation details.</Text>
+        <Text>Erro ao carregar reserva.</Text>
         <Button title="Go Back" onPress={() => navigation.goBack()} />
       </View>
     );

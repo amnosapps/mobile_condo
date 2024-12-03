@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
 import Profile from '../components/Profile';
 import { useProfile } from '../ProfileContext';
 import moment from 'moment';
@@ -11,55 +11,55 @@ const ServicesScreen = () => {
       id: 1,
       name: "Arrumação Completa do Apartamento",
       baseCost: 100,
-      bookedBy: ["João Guilherme"], // Stores names of owners
-      maxBookings: 5, // Maximum capacity for booking
-      status: "disponível", // or "em progresso", "Aguardando Liberação de Pagamento", "finalizado"
+      bookedBy: ["João Guilherme"],
+      maxBookings: 5,
+      status: "disponível",
       date: "2024-12-20",
       worker: {
         name: "João Silva",
-        photo: "https://via.placeholder.com/40", // Placeholder photo
+        photo: "https://via.placeholder.com/40",
       },
     },
     {
       id: 2,
-      name: "Manutenção de Ar-Condicionado",
-      baseCost: 200,
+      name: "Engomação de Roupa",
+      baseCost: 335,
       bookedBy: [],
       maxBookings: 3,
       status: "disponível",
       date: "2024-12-10",
       worker: {
         name: "Maria Oliveira",
-        photo: "https://via.placeholder.com/40", // Placeholder photo
+        photo: "https://via.placeholder.com/40",
       },
     },
   ]);
 
   const calculateCostPerOwner = (service) => {
     const totalOwners = service.bookedBy.length || 1;
-    return (service.baseCost / totalOwners).toFixed(2); // Rounded to 2 decimals
+    return (service.baseCost / totalOwners).toFixed(2);
   };
 
   const calculateMinCostPerOwner = (service) => {
-    return (service.baseCost / service.maxBookings).toFixed(2); // Minimum cost if fully booked
+    return (service.baseCost / service.maxBookings).toFixed(2);
   };
 
   const getContractableDateLimit = (service) => {
     const serviceDate = moment(service.date, "YYYY-MM-DD");
-    return serviceDate.subtract(3, "days").format("YYYY-MM-DD"); // Subtract 3 days and format
+    return serviceDate.subtract(3, "days").format("YYYY-MM-DD");
   };
 
   const getDaysToExpire = (service) => {
     const today = moment();
     const contractableLimit = moment(getContractableDateLimit(service), "YYYY-MM-DD");
     const daysLeft = contractableLimit.diff(today, "days");
-    return daysLeft > 0 ? daysLeft : 0; // Return 0 if already expired
+    return daysLeft > 0 ? daysLeft : 0;
   };
 
   const isContractable = (service) => {
     const serviceDate = moment(service.date, "YYYY-MM-DD");
     const today = moment();
-    return serviceDate.diff(today, "days") > 3; // Check if the service date is more than 3 days away
+    return serviceDate.diff(today, "days") > 3;
   };
 
   const bookService = (serviceId) => {
@@ -70,11 +70,11 @@ const ServicesScreen = () => {
         service.bookedBy.length < service.maxBookings
           ? {
               ...service,
-              bookedBy: [...service.bookedBy, profile.user], // Add current user to bookedBy
+              bookedBy: [...service.bookedBy, profile.user],
               status:
                 service.bookedBy.length + 1 === service.maxBookings
                   ? "em progresso"
-                  : service.status, // Change status if fully booked
+                  : service.status,
             }
           : service
       )
@@ -105,7 +105,7 @@ const ServicesScreen = () => {
   const contractedServices = services.filter((service) => service.status !== "disponível");
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Profile profile={profile} />
       <Text style={styles.sectionTitle}>Serviços Disponíveis</Text>
       <FlatList
@@ -150,7 +150,7 @@ const ServicesScreen = () => {
                 <TouchableOpacity
                   style={styles.primaryButton}
                   onPress={() => bookService(item.id)}
-                  >
+                >
                   <Text style={styles.buttonText}>Contratar</Text>
                 </TouchableOpacity>
               </>
@@ -222,7 +222,7 @@ const ServicesScreen = () => {
           <Text style={styles.emptyText}>Nenhum serviço contratado no momento.</Text>
         }
       />
-    </View>
+    </ScrollView>
   );
 };
 
@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#F9FAFB",
+    // marginBottom: 80,
   },
   sectionTitle: {
     fontSize: 16,

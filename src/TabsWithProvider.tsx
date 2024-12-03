@@ -152,10 +152,10 @@ const TabsWithProvider = () => {
               backgroundColor: '#fff',       // Tab bar background color
               position: 'absolute',              // Padding for the tab bar
               height: 60,                       // Height of the tab bar
-              bottom: 16,
+              bottom: 10,
               left: 16,
               right: 16,
-              borderRadius: 16,
+              borderRadius: 10,
               marginLeft: 10,
               marginRight: 10,
             },
