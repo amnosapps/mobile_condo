@@ -48,9 +48,9 @@ const CalendarWithCustomLocalization = ({ reservations, onDayPress }) => {
         onDayPress={handleDayPress}
         markedDates={reservations}
         theme={{
-          todayTextColor: '#DE7066',
-          monthTextColor: '#DE7066',
-          arrowColor: '#DE7066',
+          todayTextColor: '#F46600',
+          monthTextColor: '#F46600',
+          arrowColor: '#F46600',
           textMonthFontWeight: 'bold',
           textDayHeaderFontWeight: 'bold',
         }}

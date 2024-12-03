@@ -223,7 +223,7 @@ const ReservationDetailsScreen = ({ route, navigation }) => {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Checkin: {reservationData.guest_name}</Text>
 
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100, // Ensure scroll content does not overlap footer
     padding: 26,
-    backgroundColor: '#fff'
+    backgroundColor: '#F9FAFB'
   },
   container: { flex: 1, padding: 26, backgroundColor: '#fff', position: 'absolute', height: '100%' },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16 },

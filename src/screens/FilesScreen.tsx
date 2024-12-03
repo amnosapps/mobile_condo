@@ -137,7 +137,7 @@ const FilesScreen = ({ navigation }) => {
     <Container>
       {loading ? (
         <View style={{ backgroundColor: 'transparent', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#DE7066" /> {/* Loading spinner */}
+          <ActivityIndicator size="large" color="#F46600" /> {/* Loading spinner */}
           <Text>Carregando...</Text>
         </View>
       ) : files.length > 0 ? (
@@ -183,13 +183,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderWidth: 1,
     borderRadius: 20,
-    borderColor: '#DE7066',
+    borderColor: '#F46600',
     backgroundColor: '#fff',
     padding: 10,
     width: '82%',
   },
   textclearButton: {
     textAlign: 'center',
-    color: '#DE7066',
+    color: '#F46600',
   }
 });

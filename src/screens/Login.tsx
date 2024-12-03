@@ -63,7 +63,7 @@ const LoginScreen = ({ route }) => {
             <View>
                 <TouchableOpacity style={{ position: 'absolute', top: 10, left: 100, right: 100, alignItems: 'center', justifyContent: 'center' }}>
                     <Text style={{ color: '#000', textAlign: 'center' }}>Ainda não tem cadastro?</Text>
-                    <Text style={{ color: '#DE7066', textAlign: 'center', fontWeight: '500', textDecorationLine: 'underline' }}>Fale Conosco!</Text>
+                    <Text style={{ color: '#F46600', textAlign: 'center', fontWeight: '500', textDecorationLine: 'underline' }}>Fale Conosco!</Text>
                 </TouchableOpacity>
             </View>
             
@@ -73,7 +73,7 @@ const LoginScreen = ({ route }) => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, justifyContent: 'center', padding: 16, backgroundColor: '#f7f9fc' },
-    title: { fontSize: 24, textAlign: 'center', marginBottom: 24, color: '#DE7066', fontWeight: '500' },
+    title: { fontSize: 24, textAlign: 'center', marginBottom: 24, color: '#F46600', fontWeight: '500' },
     input: {
         borderWidth: 1,
         borderColor: '#ddd',
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     file: { padding: 20, borderWidth: 1, margin: 5 },
     fileTitle: { fontWeight: 'bold', backgroundColor: 'rgba(150, 150, 150, 0.3)' },
     LoginBUtton: {
-        backgroundColor: '#DE7066',
+        backgroundColor: '#F46600',
         padding: 10,
         borderRadius: 20
 

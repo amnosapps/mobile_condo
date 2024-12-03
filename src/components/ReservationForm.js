@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   reservationButton: {
     alignSelf: 'center',
     borderRadius: 20,
-    backgroundColor: '#DE7066',
+    backgroundColor: '#F46600',
     paddingVertical: 10,
     paddingHorizontal: 100,
   },

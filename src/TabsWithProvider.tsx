@@ -99,7 +99,7 @@ const TabButton = (props) => {
         duration={300}
       >
         {/* {item.route === 'FilesScreen'} */}
-        <Icon type={item.type} name={focused ? item.activeIcon : item.inActiveIcon} color={focused ? '#DC574B' : 'grey'} />
+        <Icon type={item.type} name={focused ? item.activeIcon : item.inActiveIcon} color={focused ? '#F46600' : 'grey'} />
       </Animatable.View>
     </TouchableOpacity>
   )
@@ -144,7 +144,7 @@ const TabsWithProvider = () => {
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
-            tabBarActiveTintColor: '#DC574B',   // Active icon color
+            tabBarActiveTintColor: '#F46600',   // Active icon color
             tabBarInactiveTintColor: 'gray',    // Inactive icon color
             tabBarStyle: {
               alignContent: 'center',

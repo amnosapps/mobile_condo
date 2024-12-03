@@ -74,7 +74,7 @@ const CalendarReservationManager = ({ route }) => {
             const formattedDate = format(date, 'yyyy-MM-dd');
             markedDates[formattedDate] = {
               marked: true,
-              dotColor: '#DE7066',
+              dotColor: '#F46600',
               color: '#FFF7F4',
             };
           });
@@ -89,7 +89,7 @@ const CalendarReservationManager = ({ route }) => {
       markedDates[selectedDate] = {
         ...markedDates[selectedDate],
         selected: true,
-        selectedColor: '#DE7066',
+        selectedColor: '#F46600',
       };
     }
   
@@ -142,19 +142,20 @@ const CalendarReservationManager = ({ route }) => {
       style={styles.reservationItem}
       onPress={() => navigation.navigate('ReservationDetails', { reservation: item })} // Navigate to details screen
     >
-      <View style={{ width: '20%', justifyContent: 'center', alignItems: 'center',}}>
-        <Text style={{ color: '#DE7066', fontWeight: '500'}}>Apto</Text>
-        <Text style={{ color: '#DE7066', fontWeight: '500'}}>{item.room}</Text>
+      <View style={{ width: '30%', justifyContent: 'center', alignItems: 'center',}}>
+        <Text style={{ color: '#fff', fontWeight: '500'}}>Apto</Text>
+        <Text style={{ color: '#fff', fontWeight: '500'}}>{item.room}</Text>
       </View>
       <View style={styles.reservationnInfo}>
         <Text style={styles.reservationName}>Hóspede: {item.name}</Text>
-        
         <View style={styles.dividerLine} />
-        
         <View>
-          <Text style={{ color: '#DE7066'}}>{formatDate(item.checkin)} - {formatDate(item.checkout)}</Text>
+          <Text style={{ color: '#fff'}}>{formatDate(item.checkin)} - {formatDate(item.checkout)}</Text>
         </View>
       </View>
+      {/* <View style={{ width: '20%', justifyContent: 'center', alignItems: 'center',}}>
+        <Text style={{ color: '#fff', fontWeight: '500'}}>Apto</Text>
+      </View> */}
     </TouchableOpacity>
   );
 
@@ -179,7 +180,10 @@ const CalendarReservationManager = ({ route }) => {
       
       <View style={styles.reservationHeader}>
         <Text style={styles.dateText}>
-          {selectedDate ? `Reservas em ${selectedDate}` : 'Reservas da Semana'}
+          {selectedDate
+            ? `Reservas em ${format(parseISO(selectedDate), "EEE, dd/MM", { locale: ptBR })}`
+            : 'Reservas da Semana'
+          }
         </Text>
         <CustomButton
           title="+" 
@@ -203,26 +207,26 @@ const CalendarReservationManager = ({ route }) => {
 export default CalendarReservationManager;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  container: { flex: 1, padding: 16, backgroundColor: '#F9FAFB' },
   reservationHeader: { display: 'flex', flexDirection: 'row', alignContent: 'center', alignItems: 'center', marginTop: 10 },
-  dateText: { fontSize: 18, fontWeight: '400', marginVertical: 10, width: '80%', },
-  addReservationButton: { width: '20%', backgroundColor: '#DE7066', borderRadius: 30},
+  dateText: { fontSize: 16, fontWeight: '400', marginVertical: 10, width: '80%', },
+  addReservationButton: { width: '20%', backgroundColor: '#F46600', borderRadius: 30},
   textReservationButton: { textAlign: 'center', color: 'white', fontSize: 15 },
   reservationItem: {
     display: 'flex',
     flexDirection: 'row',
     padding: 5,
     width: '100%',           // Set a fixed width
-    borderRadius: 10,    // Half of width/height to make it a circle
-    backgroundColor: '#fff', // Optional background color for visibility
+    borderRadius: 4, 
+    backgroundColor: '#F46600', // Optional background color for visibility
     justifyContent: 'center',   // Center content vertically
     alignItems: 'center',
     borderWidth: 0.5,
-    borderColor: '#DE7066',
+    borderColor: '#F46600',
     marginTop: 10
   },
   reservationnInfo: {
-    width: '80%', 
+    width: '50%', 
     borderRadius: 5,
     // backgroundColor: '#FFD7C6', 
     justifyContent: 'center',   // Center content vertically
@@ -232,11 +236,11 @@ const styles = StyleSheet.create({
   reservationName: {
     fontSize: 15, 
     fontWeight: 'bold', 
-    color: '#DE7066',
+    color: '#fff',
   },
   dividerLine: {
     height: 1,               // Thickness of the line
-    backgroundColor: '#DE7066',  // Color of the line
+    backgroundColor: '#fff',  // Color of the line
     marginVertical: 8,        // Space above and below the line
     width: '100%',            // Makes the line full width
   },

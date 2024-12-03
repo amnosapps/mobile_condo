@@ -123,7 +123,7 @@ const Profile = ({ profile }) => {
           <View style={styles.modalContainer}>
             <Text style={styles.modalTitle}>Notificações</Text>
             {loading ? (
-              <ActivityIndicator size="large" color="#dc574b" />
+              <ActivityIndicator size="large" color="#F46600" />
             ) : (
               <FlatList
                 data={notifications}
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   avatar: {
-    backgroundColor: '#dc574b',
+    backgroundColor: '#F46600',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: -5,
-    backgroundColor: '#dc574b',
+    backgroundColor: '#F46600',
     borderRadius: 10,
     width: 20,
     height: 20,
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   logoutButton: {
-    backgroundColor: '#dc574b',
+    backgroundColor: '#F46600',
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 8,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   unreadNotification: {
-    // borderColor: '#dc574b',
+    // borderColor: '#F46600',
     // borderWidth: 1,
   },
   notificationText: {
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     marginTop: 10,
-    backgroundColor: '#dc574b',
+    backgroundColor: '#F46600',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',

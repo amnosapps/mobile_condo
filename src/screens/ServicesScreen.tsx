@@ -14,7 +14,7 @@ const ServicesScreen = () => {
       bookedBy: ["João Guilherme"], // Stores names of owners
       maxBookings: 5, // Maximum capacity for booking
       status: "disponível", // or "em progresso", "Aguardando Liberação de Pagamento", "finalizado"
-      date: "2024-11-20",
+      date: "2024-12-20",
       worker: {
         name: "João Silva",
         photo: "https://via.placeholder.com/40", // Placeholder photo
@@ -27,7 +27,7 @@ const ServicesScreen = () => {
       bookedBy: [],
       maxBookings: 3,
       status: "disponível",
-      date: "2024-12-03",
+      date: "2024-12-10",
       worker: {
         name: "Maria Oliveira",
         photo: "https://via.placeholder.com/40", // Placeholder photo

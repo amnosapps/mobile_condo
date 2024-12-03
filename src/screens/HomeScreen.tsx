@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 100,
-    color: '#DE7066',
+    color: '#F46600',
   },
   logo: {
     width: 250, // Adjust width as needed
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
   description1: {
     fontSize: 16,
     textAlign: 'left',
-    color: '#DE7066',
+    color: '#F46600',
   },
   description2: {
     fontSize: 25,
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     fontWeight: 500
   },
   button: {
-    backgroundColor: '#DE7066',
+    backgroundColor: '#F46600',
     paddingVertical: 10,
     paddingHorizontal: 30,
     borderRadius: 20,

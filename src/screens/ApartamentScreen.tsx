@@ -142,7 +142,7 @@ const ApartmentList = ({ route }) => {
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#DE7066" />
+        <ActivityIndicator size="large" color="#F46600" />
         <Text style={styles.loaderText}>Carregando apartamentos...</Text>
       </View>
     );
@@ -218,7 +218,7 @@ const ApartmentList = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F4F4',
+    backgroundColor: '#F9FAFB',
     padding: 10,
   },
   listContainer: {
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   editButton: {
     marginTop: 10,
-    backgroundColor: '#DE7066',
+    backgroundColor: '#F46600',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   loaderText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#DC574B',
+    color: '#F46600',
   },
   label: {
     fontSize: 16,
