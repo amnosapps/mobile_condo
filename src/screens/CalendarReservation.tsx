@@ -133,7 +133,8 @@ const CalendarReservationManager = ({ route }) => {
       <View style={styles.reservationInfo}>
         <Text style={styles.reservationName}>Hóspede: {item.name}</Text>
         <View style={styles.dividerLine} />
-        <Text style={{ color: '#fff' }}>{formatDate(item.checkin)} - {formatDate(item.checkout)}</Text>
+        <Text style={{ color: '#fff' }}>Checkin: {formatDate(item.checkin)}</Text>
+        <Text style={{ color: '#fff' }}>Checkout: {formatDate(item.checkout)}</Text>
       </View>
     </TouchableOpacity>
   );

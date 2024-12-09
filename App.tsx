@@ -34,7 +34,7 @@ const App = () => {
     try {
       console.log('2')
       const response = await axios.post(`${API_URL}/api/token/verify/`, { token });
-      console.log('3', response)
+      console.log('3', response.data)
       if (response.status === 200) {
         setIsAuthenticated(true);
       } else {
