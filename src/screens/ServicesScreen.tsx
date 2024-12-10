@@ -1,162 +1,169 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 import Profile from '../components/Profile';
 import { useProfile } from '../ProfileContext';
-import moment from 'moment';
+import { API_URL } from '@env';
+import PaymentModal from '../components/PaymentModal';
 
 const ServicesScreen = () => {
   const profile = useProfile();
-  const [services, setServices] = useState([
-    {
-      id: 1,
-      name: "Arrumação Completa do Apartamento",
-      baseCost: 100,
-      bookedBy: ["João Guilherme"],
-      maxBookings: 5,
-      status: "disponível",
-      date: "2024-12-20",
-      worker: {
-        name: "João Silva",
-        photo: "https://via.placeholder.com/40",
-      },
-    },
-    {
-      id: 2,
-      name: "Engomação de Roupa",
-      baseCost: 335,
-      bookedBy: [],
-      maxBookings: 3,
-      status: "disponível",
-      date: "2024-12-10",
-      worker: {
-        name: "Maria Oliveira",
-        photo: "https://via.placeholder.com/40",
-      },
-    },
-  ]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
 
-  const calculateCostPerOwner = (service) => {
-    const totalOwners = service.bookedBy.length || 1;
-    return (service.baseCost / totalOwners).toFixed(2);
+  // Fetch services from backend
+  const fetchServices = async () => {
+    const token = await AsyncStorage.getItem('accessToken');
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/api/services/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setServices(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      setLoading(false);
+    }
   };
 
-  const calculateMinCostPerOwner = (service) => {
-    return (service.baseCost / service.maxBookings).toFixed(2);
+  const bookService = async (serviceId, payment) => {
+    const token = await AsyncStorage.getItem('accessToken');
+    try {
+      setLoading(true);
+      await axios.post(
+        `${API_URL}/api/services/${serviceId}/book/`,
+        {
+          "payment": payment
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchServices(); // Re-fetch services to reflect changes
+      setLoading(false);
+    } catch (error) {
+      console.error('Error booking service:', error);
+      setLoading(false);
+    }
   };
 
-  const getContractableDateLimit = (service) => {
-    const serviceDate = moment(service.date, "YYYY-MM-DD");
-    return serviceDate.subtract(3, "days").format("YYYY-MM-DD");
+  const releasePayment = async (serviceId) => {
+    const token = await AsyncStorage.getItem('accessToken');
+    try {
+      setLoading(true);
+      await axios.post(
+        `${API_URL}/api/services/${serviceId}/release_payment/`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchServices(); // Re-fetch services to reflect changes
+      setLoading(false);
+    } catch (error) {
+      console.error('Error releasing payment:', error);
+      setLoading(false);
+    }
   };
 
-  const getDaysToExpire = (service) => {
-    const today = moment();
-    const contractableLimit = moment(getContractableDateLimit(service), "YYYY-MM-DD");
-    const daysLeft = contractableLimit.diff(today, "days");
-    return daysLeft > 0 ? daysLeft : 0;
+  const removeInterest = async (serviceId) => {
+    const token = await AsyncStorage.getItem('accessToken');
+    try {
+      setLoading(true);
+      await axios.post(
+        `${API_URL}/api/services/${serviceId}/remove_interest/`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      fetchServices(); // Re-fetch services to reflect changes
+      setLoading(false);
+    } catch (error) {
+      console.error('Error removing interest:', error);
+      setLoading(false);
+    }
   };
 
-  const isContractable = (service) => {
-    const serviceDate = moment(service.date, "YYYY-MM-DD");
-    const today = moment();
-    return serviceDate.diff(today, "days") > 3;
+  const handleBook = (service) => {
+    setSelectedService(service);
+    setModalVisible(true);
   };
 
-  const bookService = (serviceId) => {
-    setServices((prevServices) =>
-      prevServices.map((service) =>
-        service.id === serviceId &&
-        service.status === "disponível" &&
-        service.bookedBy.length < service.maxBookings
-          ? {
-              ...service,
-              bookedBy: [...service.bookedBy, profile.user],
-              status:
-                service.bookedBy.length + 1 === service.maxBookings
-                  ? "em progresso"
-                  : service.status,
-            }
-          : service
-      )
-    );
+  const confirmPayment = async (creditCard) => {
+    setModalVisible(false);
+  
+    // Simulate payment success
+    const paymentData = { status: 'success', creditCard };
+
+  
+    await bookService(selectedService.id, paymentData);
   };
 
-  const completeService = (serviceId) => {
-    setServices((prevServices) =>
-      prevServices.map((service) =>
-        service.id === serviceId && service.status === "em progresso"
-          ? { ...service, status: "Aguardando Liberação de Pagamento" }
-          : service
-      )
-    );
-  };
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
-  const releasePayment = (serviceId) => {
-    setServices((prevServices) =>
-      prevServices.map((service) =>
-        service.id === serviceId && service.status === "Aguardando Liberação de Pagamento"
-          ? { ...service, status: "finalizado" }
-          : service
-      )
-    );
-  };
+  // Filter services for display
+  const availableServices = services.filter(
+    (service) =>
+      service.status === 'available' &&
+      !service.bookings.some((booking) => booking.username === profile.user)
+  );
 
-  const availableServices = services.filter((service) => service.status === "disponível");
-  const contractedServices = services.filter((service) => service.status !== "disponível");
+  const contractedServices = services.filter((service) =>
+    service.bookings.some((booking) => booking.username === profile.user)
+  );
+
+  console.log(selectedService)
 
   return (
     <ScrollView style={styles.container}>
       <Profile profile={profile} />
+
+      {/* Available Services */}
       <Text style={styles.sectionTitle}>Serviços Disponíveis</Text>
+      {loading && <Text>Carregando...</Text>}
       <FlatList
         data={availableServices}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.serviceName}>{item.name}</Text>
-            <View style={styles.workerContainer}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Image source={{ uri: item.worker.photo }} style={styles.workerPhoto} />
-                <Text style={styles.workerName}>{item.worker.name}</Text>
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={styles.bookingCount}>
-                  {item.bookedBy.length}/{item.maxBookings}
-                </Text>
-              </View>
-            </View>
             <Text style={styles.serviceDetails}>
-              Custo por pessoa:{" "}
-              <Text style={styles.detailValue}>
-                R${calculateCostPerOwner(item)}{" "}
-              </Text>
-              <Text style={styles.minCost}>
-                (esse valor pode chegar a R${calculateMinCostPerOwner(item)})
-              </Text>
+              Custo Base: <Text style={styles.detailValue}>R${item.base_cost}</Text>
             </Text>
             <Text style={styles.serviceDetails}>
-              Data do Serviço: <Text style={styles.detailValue}>{item.date}</Text>
+              Máximo de Contratações: <Text style={styles.detailValue}>{item.max_bookings}</Text>
             </Text>
-            {item.bookedBy.length > 0 && (
-              <Text style={styles.interestedOwners}>
-                Interessados: {item.bookedBy.join(", ")}
-              </Text>
-            )}
-            {isContractable(item) && item.bookedBy.length < item.maxBookings ? (
-              <>
-                <Text style={styles.expireInfo}>
-                  {getDaysToExpire(item)} dias para expirar a oferta
-                </Text>
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => bookService(item.id)}
-                >
-                  <Text style={styles.buttonText}>Contratar</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <Text style={styles.fullText}>Serviço lotado ou prazo de contratação expirado</Text>
-            )}
+            <Text style={styles.serviceDetails}>
+              Descrição: <Text style={styles.detailValue}>{item.description}</Text>
+            </Text>
+            <Text style={styles.serviceDetails}>
+              Máximo de Contratações: <Text style={styles.detailValue}>{item.max_bookings}</Text>
+            </Text>
+            <Text style={styles.serviceDetails}>
+              Interessados:{' '}
+              <Text style={styles.detailValue}>{item.bookings.length}</Text>
+            </Text>
+            <Text style={styles.serviceDetails}>
+              Status: <Text style={styles.detailValue}>{item.status}</Text>
+            </Text>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => handleBook(item)}
+            >
+              <Text style={styles.buttonText}>Contratar</Text>
+            </TouchableOpacity>
+            <PaymentModal
+              visible={isModalVisible}
+              onClose={() => setModalVisible(false)}
+              onConfirm={confirmPayment}
+            />
           </View>
         )}
         ListEmptyComponent={
@@ -164,6 +171,7 @@ const ServicesScreen = () => {
         }
       />
 
+      {/* Contracted Services */}
       <Text style={styles.sectionTitle}>Serviços Contratados</Text>
       <FlatList
         data={contractedServices}
@@ -171,46 +179,32 @@ const ServicesScreen = () => {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.serviceName}>{item.name}</Text>
-            <View style={styles.workerContainer}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Image source={{ uri: item.worker.photo }} style={styles.workerPhoto} />
-                <Text style={styles.workerName}>{item.worker.name}</Text>
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={styles.bookingCount}>
-                  {item.bookedBy.length}/{item.maxBookings}
-                </Text>
-              </View>
-            </View>
             <Text style={styles.serviceDetails}>
-              Custo por pessoa:{" "}
+              Descrição: <Text style={styles.detailValue}>{item.description}</Text>
+            </Text>
+            <Text style={styles.serviceDetails}>
+              Máximo de Contratações: <Text style={styles.detailValue}>{item.max_bookings}</Text>
+            </Text>
+            <Text style={styles.serviceDetails}>
+              Interessados:{' '}
               <Text style={styles.detailValue}>
-                R${calculateCostPerOwner(item)}{" "}
-              </Text>
-              <Text style={styles.minCost}>
-                (esse valor pode chegar a R${calculateMinCostPerOwner(item)})
+                {item.bookings.map((booking) => booking.username).join(', ') || 'Nenhum'}
               </Text>
             </Text>
             <Text style={styles.serviceDetails}>
-              Data do Serviço: <Text style={styles.detailValue}>{item.date}</Text>
+              Status: <Text style={styles.detailValue}>{item.status}</Text>
             </Text>
-            {item.bookedBy.length > 0 && (
-              <Text style={styles.interestedOwners}>
-                Interessados: {item.bookedBy.join(", ")}
-              </Text>
-            )}
-            <Text style={styles.serviceStatus}>Status: {item.status}</Text>
-            {item.status === "em progresso" && (
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => completeService(item.id)}
-              >
-                <Text style={styles.buttonText}>Finalizar Serviço</Text>
-              </TouchableOpacity>
-            )}
-            {item.status === "Aguardando Liberação de Pagamento" && (
+            {item.status === 'available' && (
               <TouchableOpacity
                 style={styles.secondaryButton}
+                onPress={() => removeInterest(item.id)}
+              >
+                <Text style={styles.buttonText}>Remover Interesse</Text>
+              </TouchableOpacity>
+            )}
+            {item.status === 'waiting_payment' && (
+              <TouchableOpacity
+                style={styles.paymentButton}
                 onPress={() => releasePayment(item.id)}
               >
                 <Text style={styles.buttonText}>Liberar Pagamento</Text>
@@ -230,126 +224,73 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#F9FAFB",
-    // marginBottom: 80,
+    backgroundColor: '#F9FAFB',
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#333",
+    fontWeight: '700',
+    color: '#333',
     marginVertical: 15,
   },
-  expireInfo: {
-    fontSize: 14,
-    color: "#E67E22",
-    marginBottom: 8,
-    fontWeight: "bold",
-  },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8,
     marginBottom: 15,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 1,
-    borderColor: "#EDEDED",
+    borderColor: '#EDEDED',
   },
   serviceName: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#2C3E50",
+    fontWeight: 'bold',
+    color: '#2C3E50',
     marginBottom: 8,
-  },
-  workerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    justifyContent: 'space-between'
-  },
-  workerPhoto: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  workerName: {
-    fontSize: 14,
-    color: "#34495E",
-    fontWeight: "600",
   },
   serviceDetails: {
     fontSize: 14,
-    color: "#7F8C8D",
+    color: '#7F8C8D',
     marginBottom: 4,
   },
   detailValue: {
-    fontWeight: "600",
-    color: "#34495E",
-  },
-  minCost: {
-    fontSize: 12,
-    color: "#95A5A6",
-    fontStyle: "italic",
-  },
-  bookingCount: {
-    fontSize: 17,
-    color: "#2C3E50",
-    marginBottom: 4,
-    fontWeight: "600",
-  },
-  interestedOwners: {
-    fontSize: 14,
-    color: "#2C3E50",
-    fontStyle: "italic",
-    marginBottom: 4,
-  },
-  alertText: {
-    fontSize: 14,
-    color: "#E74C3C",
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
-  serviceStatus: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#2980B9",
-    marginBottom: 8,
+    fontWeight: '600',
+    color: '#34495E',
   },
   primaryButton: {
-    backgroundColor: "#27AE60",
+    backgroundColor: '#27AE60',
     padding: 10,
     borderRadius: 6,
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 10,
   },
   secondaryButton: {
-    backgroundColor: "#E67E22",
+    backgroundColor: '#E67E22',
     padding: 10,
     borderRadius: 6,
-    alignItems: "center",
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  paymentButton: {
+    backgroundColor: '#F46600',
+    padding: 10,
+    borderRadius: 6,
+    alignItems: 'center',
     marginTop: 10,
   },
   buttonText: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   emptyText: {
-    textAlign: "center",
-    color: "#95A5A6",
+    textAlign: 'center',
+    color: '#95A5A6',
     fontSize: 14,
     marginVertical: 10,
-  },
-  fullText: {
-    textAlign: "center",
-    color: "#E74C3C",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginTop: 10,
   },
 });
 
