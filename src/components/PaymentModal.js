@@ -44,7 +44,7 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
           creditCard,
           cardHolderName,
           expirationMonth,
-          expirationYear: `20${expirationYear}`,
+          expirationYear: expirationYear,
           cvv,
           identificationType,
           identificationNumber,

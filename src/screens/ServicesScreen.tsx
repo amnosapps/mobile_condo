@@ -6,7 +6,7 @@ import Profile from '../components/Profile';
 import { useProfile } from '../ProfileContext';
 import { API_URL } from '@env';
 import PaymentModal from '../components/PaymentModal';
-// import Clipboard from '@react-native-clipboard/clipboard';
+import Clipboard from '@react-native-clipboard/clipboard';
 
 const ServicesScreen = () => {
   const profile = useProfile();
@@ -70,17 +70,19 @@ const ServicesScreen = () => {
       const paymentData = { method: "pix" };
       await bookService(selectedService.id, paymentData);
     } else {
-      const [expirationMonth, expirationYear] = paymentDetails.expirationDate.split("/");
+      console.log(paymentDetails)
+      
       const paymentData = {
         method: "card",
         creditCard: paymentDetails.creditCard,
         cardHolderName: paymentDetails.cardHolderName,
-        expirationMonth,
-        expirationYear: `20${expirationYear}`,
+        expirationMonth: paymentDetails.expirationMonth,
+        expirationYear: paymentDetails.expirationYear,
         cvv: paymentDetails.cvv,
         identificationType: paymentDetails.identificationType,
         identificationNumber: paymentDetails.identificationNumber,
       };
+      
       await bookService(selectedService.id, paymentData);
     }
   };
@@ -206,7 +208,7 @@ const ServicesScreen = () => {
             <Button
               title="Copy PIX Code"
               onPress={() => {
-                navigator.clipboard.writeText(qrCode);
+                Clipboard.setString(qrCode);
                 alert("PIX code copied to clipboard!");
               }}
             />
