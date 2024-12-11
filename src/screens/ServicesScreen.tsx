@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, Modal, TextInput, Button, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Profile from '../components/Profile';
 import { useProfile } from '../ProfileContext';
 import { API_URL } from '@env';
 import PaymentModal from '../components/PaymentModal';
+// import Clipboard from '@react-native-clipboard/clipboard';
 
 const ServicesScreen = () => {
   const profile = useProfile();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [qrCode, setQrCode] = useState("");
+  const [qrCodeBase64, setQrCodeBase64] = useState("");
   const [selectedService, setSelectedService] = useState(null);
 
   // Fetch services from backend
@@ -30,83 +34,65 @@ const ServicesScreen = () => {
     }
   };
 
-  const bookService = async (serviceId, payment) => {
-    const token = await AsyncStorage.getItem('accessToken');
+  const bookService = async (serviceId, paymentData) => {
+    const token = await AsyncStorage.getItem("accessToken");
     try {
       setLoading(true);
-      await axios.post(
+      const response = await axios.post(
         `${API_URL}/api/services/${serviceId}/book/`,
-        {
-          "payment": payment
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { payment: paymentData },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+  
+      if (response.data.status === "pending" && paymentData.method === "pix") {
+        // Handle PIX-specific pending payment
+        setQrCode(response.data.qr_code);
+        setQrCodeBase64(response.data.qr_code_base64);
+        setQrModalVisible(true); // Show QR code modal
+      } else {
+        // Success for card payments or completed PIX
+        alert("Payment successful!");
+      }
+  
       fetchServices(); // Re-fetch services to reflect changes
       setLoading(false);
     } catch (error) {
-      console.error('Error booking service:', error);
+      console.error("Error booking service:", error);
+      alert("Payment failed. Please try again.");
       setLoading(false);
     }
   };
 
-  const releasePayment = async (serviceId) => {
-    const token = await AsyncStorage.getItem('accessToken');
-    try {
-      setLoading(true);
-      await axios.post(
-        `${API_URL}/api/services/${serviceId}/release_payment/`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      fetchServices(); // Re-fetch services to reflect changes
-      setLoading(false);
-    } catch (error) {
-      console.error('Error releasing payment:', error);
-      setLoading(false);
-    }
-  };
-
-  const removeInterest = async (serviceId) => {
-    const token = await AsyncStorage.getItem('accessToken');
-    try {
-      setLoading(true);
-      await axios.post(
-        `${API_URL}/api/services/${serviceId}/remove_interest/`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      fetchServices(); // Re-fetch services to reflect changes
-      setLoading(false);
-    } catch (error) {
-      console.error('Error removing interest:', error);
-      setLoading(false);
-    }
-  };
-
-  const handleBook = (service) => {
-    setSelectedService(service);
-    setModalVisible(true);
-  };
-
-  const confirmPayment = async (creditCard) => {
+  const confirmPayment = async (paymentDetails) => {
     setModalVisible(false);
-  
-    // Simulate payment success
-    const paymentData = { status: 'success', creditCard };
 
-  
-    await bookService(selectedService.id, paymentData);
+    if (paymentDetails.method === "pix") {
+      const paymentData = { method: "pix" };
+      await bookService(selectedService.id, paymentData);
+    } else {
+      const [expirationMonth, expirationYear] = paymentDetails.expirationDate.split("/");
+      const paymentData = {
+        method: "card",
+        creditCard: paymentDetails.creditCard,
+        cardHolderName: paymentDetails.cardHolderName,
+        expirationMonth,
+        expirationYear: `20${expirationYear}`,
+        cvv: paymentDetails.cvv,
+        identificationType: paymentDetails.identificationType,
+        identificationNumber: paymentDetails.identificationNumber,
+      };
+      await bookService(selectedService.id, paymentData);
+    }
   };
 
   useEffect(() => {
     fetchServices();
   }, []);
+
+  const handleBook = (service) => {
+    setSelectedService(service);
+    setModalVisible(true);
+  };
 
   // Filter services for display
   const availableServices = services.filter(
@@ -118,8 +104,6 @@ const ServicesScreen = () => {
   const contractedServices = services.filter((service) =>
     service.bookings.some((booking) => booking.username === profile.user)
   );
-
-  console.log(selectedService)
 
   return (
     <ScrollView style={styles.container}>
@@ -144,9 +128,6 @@ const ServicesScreen = () => {
               Descrição: <Text style={styles.detailValue}>{item.description}</Text>
             </Text>
             <Text style={styles.serviceDetails}>
-              Máximo de Contratações: <Text style={styles.detailValue}>{item.max_bookings}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
               Interessados:{' '}
               <Text style={styles.detailValue}>{item.bookings.length}</Text>
             </Text>
@@ -159,11 +140,6 @@ const ServicesScreen = () => {
             >
               <Text style={styles.buttonText}>Contratar</Text>
             </TouchableOpacity>
-            <PaymentModal
-              visible={isModalVisible}
-              onClose={() => setModalVisible(false)}
-              onConfirm={confirmPayment}
-            />
           </View>
         )}
         ListEmptyComponent={
@@ -194,28 +170,54 @@ const ServicesScreen = () => {
             <Text style={styles.serviceDetails}>
               Status: <Text style={styles.detailValue}>{item.status}</Text>
             </Text>
-            {item.status === 'available' && (
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                onPress={() => removeInterest(item.id)}
-              >
-                <Text style={styles.buttonText}>Remover Interesse</Text>
-              </TouchableOpacity>
-            )}
-            {item.status === 'waiting_payment' && (
-              <TouchableOpacity
-                style={styles.paymentButton}
-                onPress={() => releasePayment(item.id)}
-              >
-                <Text style={styles.buttonText}>Liberar Pagamento</Text>
-              </TouchableOpacity>
-            )}
           </View>
         )}
         ListEmptyComponent={
           <Text style={styles.emptyText}>Nenhum serviço contratado no momento.</Text>
         }
       />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onConfirm={confirmPayment}
+      />
+
+      {/* QR Code Modal */}
+      <Modal visible={qrModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>PIX Payment</Text>
+            {qrCodeBase64 ? (
+              <Image
+                source={{ uri: `data:image/png;base64,${qrCodeBase64}` }}
+                style={styles.qrCode}
+              />
+            ) : (
+              <Text>No QR Code available</Text>
+            )}
+            <Text style={styles.pixTitle}>PIX Code:</Text>
+            <TextInput
+              style={styles.pixCode}
+              value={qrCode}
+              editable={false}
+            />
+            <Button
+              title="Copy PIX Code"
+              onPress={() => {
+                navigator.clipboard.writeText(qrCode);
+                alert("PIX code copied to clipboard!");
+              }}
+            />
+            <Button
+              title="Close"
+              onPress={() => setQrModalVisible(false)}
+              color="red"
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -267,20 +269,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-  secondaryButton: {
-    backgroundColor: '#E67E22',
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  paymentButton: {
-    backgroundColor: '#F46600',
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 10,
-  },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 14,
@@ -291,6 +279,79 @@ const styles = StyleSheet.create({
     color: '#95A5A6',
     fontSize: 14,
     marginVertical: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    padding: 20,
+    borderRadius: 12,
+    width: '85%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  qrCode: {
+    width: 200,
+    height: 200,
+    marginVertical: 20,
+  },
+  pixTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#34495E',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  pixCode: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    width: '100%',
+    textAlign: 'center',
+    fontSize: 14,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 20,
+  },
+  copyButton: {
+    backgroundColor: '#27AE60',
+    padding: 10,
+    borderRadius: 6,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  copyButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  closeButton: {
+    backgroundColor: '#F44336',
+    padding: 10,
+    borderRadius: 6,
+    width: '100%',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 
