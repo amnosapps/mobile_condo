@@ -80,13 +80,13 @@ const ServicesScreen = () => {
     }
   };
 
-  const releasePayment = async (serviceId) => {
+  const releasePayment = async (serviceId, paymentId) => {
     const token = await AsyncStorage.getItem('accessToken');
     try {
       setLoading(true);
       await axios.post(
-        `${API_URL}/api/service/${serviceId}/release_payment/`,
-        {},
+        `${API_URL}/api/services/${serviceId}/release_payment/`,
+        { payment_id: paymentId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchServices();
@@ -97,13 +97,13 @@ const ServicesScreen = () => {
     }
   };
 
-  const removeInterest = async (serviceId) => {
+  const removeInterest = async (serviceId, bookingId) => {
     const token = await AsyncStorage.getItem('accessToken');
     try {
       setLoading(true);
       await axios.post(
-        `${API_URL}/api/book/remove_interest/`,
-        { service_id: serviceId },
+        `${API_URL}/api/services/${serviceId}/remove_interest/`,
+        { booking_id: bookingId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchServices();
@@ -118,8 +118,7 @@ const ServicesScreen = () => {
     setModalVisible(false);
 
     if (paymentDetails.method === 'pix') {
-      const paymentData = { method: 'pix' };
-      await bookService(selectedService.id, paymentData);
+      await bookService(selectedService.id, paymentDetails);
     } else {
       const paymentData = {
         method: 'card',
@@ -151,77 +150,141 @@ const ServicesScreen = () => {
     return diff > 0 ? diff : 0;
   };
 
-  console.log(services[0])
+  const statusServiceMap = {
+    available: 'Disponível',
+    waiting_payment: 'Aguardando Pagamento',
+    in_progress: 'Em Andamento',
+    completed: 'Concluído',
+    cancelled: 'Cancelado',
+  };
 
-  const renderServiceCard = (item, isAvailable) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{item?.provider.name?.charAt(0)?.toUpperCase()}</Text>
+  const statusPaymentMap = {
+    pending: 'Pendente',
+    paid: 'Pago',
+    released: 'Libertado',
+    failed: 'Erro',
+    cancelled: 'Cancelado',
+  };
+
+  const renderServiceCard = (item) => {
+    const lastBooking = item.bookings?.find((booking) => booking.username === profile.user && booking.active === true);
+    const lastPayment = lastBooking?.payments?.[lastBooking.payments.length - 1] || null;
+  
+    const paymentStatus = lastPayment ? lastPayment.status : "none";
+    const serviceStatus = item.status;
+  
+    // Default values for buttons
+    let buttonLabel = "Finalizado";
+    let buttonAction = null;
+    let buttonStyle = styles.grayButton;
+    let buttonDisabled = true;
+  
+    if (!lastBooking || lastBooking.active === false) {
+      // If the service is not booked by the user
+      buttonLabel = "Contratar";
+      buttonAction = () => handleBook(item);
+      buttonStyle = styles.primaryButton;
+      buttonDisabled = false;
+    } else if (paymentStatus === "pending" && serviceStatus === "available") {
+      buttonLabel = "Remover Interesse";
+      buttonAction = () => removeInterest(item.id, lastBooking.id);
+      buttonStyle = styles.orangeButton;
+      buttonDisabled = false;
+    } else if (serviceStatus === "available" && paymentStatus === "paid") {
+      buttonLabel = "Remover Interesse";
+      buttonAction = () => removeInterest(item.id, lastBooking.id);
+      buttonStyle = styles.orangeButton;
+      buttonDisabled = false;
+    } else if (serviceStatus === "in_progress" && paymentStatus === "paid") {
+      buttonLabel = "Aguarde o Término do Serviço";
+      buttonStyle = styles.grayButton;
+      buttonDisabled = true;
+    } else if (paymentStatus === "paid" && serviceStatus === "waiting_payment") {
+      buttonLabel = "Liberar Pagamento";
+      buttonAction = () => releasePayment(item.id, lastPayment.id);
+      buttonStyle = styles.orangeButton;
+      buttonDisabled = false;
+    } else if (paymentStatus === "released" && serviceStatus === "completed") {
+      buttonLabel = "Finalizado";
+      buttonStyle = styles.grayButton;
+      buttonDisabled = true;
+    }
+
+    const activeBookings = item.bookings.filter(booking => booking.active);
+    const activeBookingsLength = activeBookings.length;
+  
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{item?.provider.name?.charAt(0)?.toUpperCase()}</Text>
+            </View>
+            <View style={styles.comumContainer}>
+              <Text style={styles.workerName}>{item.provider.name}</Text>
+              <Text style={styles.description}>{item.name}</Text>
+            </View>
           </View>
           <View style={styles.comumContainer}>
-            <Text style={styles.workerName}>{item.provider.name}</Text>
-            <Text style={styles.description}>{item.name}</Text>
+            <Text style={styles.cost}>R${item.base_cost}</Text>
           </View>
         </View>
         <View style={styles.comumContainer}>
-            <Text style={styles.cost}>R${item.base_cost}</Text>
+          <Text style={styles.serviceName}>{item.name}</Text>
+          <Text style={styles.description}>{item.description}</Text>
+        </View>
+        <View style={styles.comumContainer}>
+          <Text style={styles.cost}>
+            Custo Base: R${item.base_cost}
+          </Text>
+          <Text style={styles.description}>
+            (podendo chegar até R${(item.base_cost / item.max_bookings).toFixed(2)})
+          </Text>
+        </View>
+        {}
+        <Text style={styles.status}>
+          Status: {statusServiceMap[serviceStatus]} {!lastBooking && (<>(oferta expira em {getDaysRemaining(item.date)} dias)</>)}
+        </Text>
+        <Text style={styles.interested}>Interessados: {activeBookingsLength} de {item.max_bookings}</Text>
+        {lastPayment && lastBooking.active === true && (
+          <View style={styles.paymentsSection}>
+            <Text style={styles.paymentInfo}>
+              Último Pagamento: R${lastPayment.amount_paid} - Status:{" "}
+              {statusPaymentMap[lastPayment.status]}
+            </Text>
+            {/* <TouchableOpacity
+              style={styles.viewPaymentsButton}
+              onPress={() => console.log(lastBooking.payments)}
+            >
+              <Text style={styles.viewPaymentsText}>Outros Pagamentos</Text>
+            </TouchableOpacity> */}
           </View>
-      </View>
-      <View style={styles.comumContainer}>
-        <Text style={styles.serviceName}>{item.name}</Text>
-        <Text style={styles.description}>{item.description}</Text>
-      </View>
-      <View style={styles.comumContainer}>
-        <Text style={styles.cost}>
-          Custo Base: R${item.base_cost}
-        </Text>
-        <Text style={styles.description}>
-          (podendo chegar até R${(item.base_cost / item.max_bookings).toFixed(2)})
-        </Text>
-      </View>
-      <Text style={styles.status}>
-        Status: {item.status} | Expira em {getDaysRemaining(item.expiry_date)} dias
-      </Text>
-      <Text style={styles.interested}>Interessados: {item.bookings.length} de {item.max_bookings}</Text>
-      {isAvailable && (
-        <TouchableOpacity style={styles.primaryButton} onPress={() => handleBook(item)}>
-          <Text style={styles.buttonText}>Contratar</Text>
-        </TouchableOpacity>
-      )}
-      {!isAvailable && item.status === 'waiting_payment' && (
+        )}
         <TouchableOpacity
-          style={styles.orangeButton}
-          onPress={() => releasePayment(item.id)}
+          style={[buttonStyle, buttonDisabled && styles.disabledButton]}
+          onPress={buttonAction}
+          disabled={buttonDisabled}
         >
-          <Text style={styles.buttonText}>Liberar Pagamento</Text>
+          <Text style={styles.buttonText}>{buttonLabel}</Text>
         </TouchableOpacity>
-      )}
-      {!isAvailable && item.status === 'available' && (
-        <TouchableOpacity
-          style={styles.orangeButton}
-          onPress={() => removeInterest(item.id)}
-        >
-          <Text style={styles.buttonText}>Remove Book</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+      </View>
+    );
+  };
 
   const availableServices = services.filter(
     (service) =>
       service.status === 'available' &&
-      !service.bookings.some((booking) => booking.username === profile.user)
+      !service.bookings.some((booking) => booking.username === profile.user && booking.active === true)
   );
 
   const contractedServices = services.filter((service) =>
-    service.bookings.some((booking) => booking.username === profile.user)
+    service.bookings.some((booking) => booking.username === profile.user && booking.active === true)
   );
 
   return (
     <ScrollView
       style={styles.container}
+      contentContainerStyle={styles.contentContainer}
       refreshControl={
         <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
       }
@@ -300,12 +363,15 @@ const ServicesScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f4f4f4' },
+  contentContainer: {
+    paddingBottom: 100, // Add enough padding to prevent overlap with tab bar
+  },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginVertical: 15 },
   card: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, marginBottom: 15, shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOffset: { width: 10, height: 10 },
+    shadowOpacity: 1,
     shadowRadius: 5,
-    elevation: 3, },
+    elevation: 5, },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, justifyContent: 'space-between' },
   avatarContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 1, justifyContent: 'space-between' },
   comumContainer: { alignItems: 'flex-start', marginBottom: 1 },
@@ -341,6 +407,37 @@ const styles = StyleSheet.create({
   copyButtonText: { color: '#FFF', fontWeight: 'bold' },
   closeButton: { backgroundColor: '#F44336', padding: 10, borderRadius: 6 },
   closeButtonText: { color: '#FFF', fontWeight: 'bold' },
+  grayButton: {
+    backgroundColor: "#d3d3d3",
+    padding: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  viewPaymentsButton: {
+    marginTop: 10,
+    backgroundColor: "#007BFF",
+    padding: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  viewPaymentsText: {
+    color: "#FFF",
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "#ccc",
+  },
+  paymentsSection: {
+    marginTop: 10,
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  paymentInfo: {
+    fontSize: 12,
+    color: "#555",
+  },
+  
 });
 
 export default ServicesScreen;
