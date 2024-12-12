@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, Modal, TextInput, Button, Image } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  TextInput,
+  Button,
+  Image,
+  RefreshControl,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Profile from '../components/Profile';
@@ -12,13 +24,13 @@ const ServicesScreen = () => {
   const profile = useProfile();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isRefreshing, setRefreshing] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
-  const [qrCode, setQrCode] = useState("");
-  const [qrCodeBase64, setQrCodeBase64] = useState("");
+  const [qrCode, setQrCode] = useState('');
+  const [qrCodeBase64, setQrCodeBase64] = useState('');
   const [selectedService, setSelectedService] = useState(null);
 
-  // Fetch services from backend
   const fetchServices = async () => {
     const token = await AsyncStorage.getItem('accessToken');
     try {
@@ -28,14 +40,21 @@ const ServicesScreen = () => {
       });
       setServices(response.data);
       setLoading(false);
+      setRefreshing(false);
     } catch (error) {
       console.error('Error fetching services:', error);
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchServices();
+  };
+
   const bookService = async (serviceId, paymentData) => {
-    const token = await AsyncStorage.getItem("accessToken");
+    const token = await AsyncStorage.getItem('accessToken');
     try {
       setLoading(true);
       const response = await axios.post(
@@ -43,22 +62,54 @@ const ServicesScreen = () => {
         { payment: paymentData },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
-      if (response.data.status === "pending" && paymentData.method === "pix") {
-        // Handle PIX-specific pending payment
+
+      if (response.data.status === 'pending' && paymentData.method === 'pix') {
         setQrCode(response.data.qr_code);
         setQrCodeBase64(response.data.qr_code_base64);
-        setQrModalVisible(true); // Show QR code modal
+        setQrModalVisible(true);
       } else {
-        // Success for card payments or completed PIX
-        alert("Payment successful!");
+        alert('Payment successful!');
       }
-  
-      fetchServices(); // Re-fetch services to reflect changes
+
+      fetchServices();
       setLoading(false);
     } catch (error) {
-      console.error("Error booking service:", error);
-      alert("Payment failed. Please try again.");
+      console.error('Error booking service:', error);
+      alert('Payment failed. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const releasePayment = async (serviceId) => {
+    const token = await AsyncStorage.getItem('accessToken');
+    try {
+      setLoading(true);
+      await axios.post(
+        `${API_URL}/api/service/${serviceId}/release_payment/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchServices();
+      setLoading(false);
+    } catch (error) {
+      console.error('Error releasing payment:', error);
+      setLoading(false);
+    }
+  };
+
+  const removeInterest = async (serviceId) => {
+    const token = await AsyncStorage.getItem('accessToken');
+    try {
+      setLoading(true);
+      await axios.post(
+        `${API_URL}/api/book/remove_interest/`,
+        { service_id: serviceId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchServices();
+      setLoading(false);
+    } catch (error) {
+      console.error('Error removing interest:', error);
       setLoading(false);
     }
   };
@@ -66,14 +117,12 @@ const ServicesScreen = () => {
   const confirmPayment = async (paymentDetails) => {
     setModalVisible(false);
 
-    if (paymentDetails.method === "pix") {
-      const paymentData = { method: "pix" };
+    if (paymentDetails.method === 'pix') {
+      const paymentData = { method: 'pix' };
       await bookService(selectedService.id, paymentData);
     } else {
-      console.log(paymentDetails)
-      
       const paymentData = {
-        method: "card",
+        method: 'card',
         creditCard: paymentDetails.creditCard,
         cardHolderName: paymentDetails.cardHolderName,
         expirationMonth: paymentDetails.expirationMonth,
@@ -82,7 +131,6 @@ const ServicesScreen = () => {
         identificationType: paymentDetails.identificationType,
         identificationNumber: paymentDetails.identificationNumber,
       };
-      
       await bookService(selectedService.id, paymentData);
     }
   };
@@ -96,7 +144,71 @@ const ServicesScreen = () => {
     setModalVisible(true);
   };
 
-  // Filter services for display
+  const getDaysRemaining = (expiryDate) => {
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    const diff = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  };
+
+  console.log(services[0])
+
+  const renderServiceCard = (item, isAvailable) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={styles.avatarContainer}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{item?.provider.name?.charAt(0)?.toUpperCase()}</Text>
+          </View>
+          <View style={styles.comumContainer}>
+            <Text style={styles.workerName}>{item.provider.name}</Text>
+            <Text style={styles.description}>{item.name}</Text>
+          </View>
+        </View>
+        <View style={styles.comumContainer}>
+            <Text style={styles.cost}>R${item.base_cost}</Text>
+          </View>
+      </View>
+      <View style={styles.comumContainer}>
+        <Text style={styles.serviceName}>{item.name}</Text>
+        <Text style={styles.description}>{item.description}</Text>
+      </View>
+      <View style={styles.comumContainer}>
+        <Text style={styles.cost}>
+          Custo Base: R${item.base_cost}
+        </Text>
+        <Text style={styles.description}>
+          (podendo chegar até R${(item.base_cost / item.max_bookings).toFixed(2)})
+        </Text>
+      </View>
+      <Text style={styles.status}>
+        Status: {item.status} | Expira em {getDaysRemaining(item.expiry_date)} dias
+      </Text>
+      <Text style={styles.interested}>Interessados: {item.bookings.length} de {item.max_bookings}</Text>
+      {isAvailable && (
+        <TouchableOpacity style={styles.primaryButton} onPress={() => handleBook(item)}>
+          <Text style={styles.buttonText}>Contratar</Text>
+        </TouchableOpacity>
+      )}
+      {!isAvailable && item.status === 'waiting_payment' && (
+        <TouchableOpacity
+          style={styles.orangeButton}
+          onPress={() => releasePayment(item.id)}
+        >
+          <Text style={styles.buttonText}>Liberar Pagamento</Text>
+        </TouchableOpacity>
+      )}
+      {!isAvailable && item.status === 'available' && (
+        <TouchableOpacity
+          style={styles.orangeButton}
+          onPress={() => removeInterest(item.id)}
+        >
+          <Text style={styles.buttonText}>Remove Book</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
   const availableServices = services.filter(
     (service) =>
       service.status === 'available' &&
@@ -108,7 +220,12 @@ const ServicesScreen = () => {
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
+      }
+    >
       <Profile profile={profile} />
 
       {/* Available Services */}
@@ -117,33 +234,7 @@ const ServicesScreen = () => {
       <FlatList
         data={availableServices}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.serviceName}>{item.name}</Text>
-            <Text style={styles.serviceDetails}>
-              Custo Base: <Text style={styles.detailValue}>R${item.base_cost}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Máximo de Contratações: <Text style={styles.detailValue}>{item.max_bookings}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Descrição: <Text style={styles.detailValue}>{item.description}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Interessados:{' '}
-              <Text style={styles.detailValue}>{item.bookings.length}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Status: <Text style={styles.detailValue}>{item.status}</Text>
-            </Text>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => handleBook(item)}
-            >
-              <Text style={styles.buttonText}>Contratar</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        renderItem={({ item }) => renderServiceCard(item, true)}
         ListEmptyComponent={
           <Text style={styles.emptyText}>Nenhum serviço disponível no momento.</Text>
         }
@@ -154,26 +245,7 @@ const ServicesScreen = () => {
       <FlatList
         data={contractedServices}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.serviceName}>{item.name}</Text>
-            <Text style={styles.serviceDetails}>
-              Descrição: <Text style={styles.detailValue}>{item.description}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Máximo de Contratações: <Text style={styles.detailValue}>{item.max_bookings}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Interessados:{' '}
-              <Text style={styles.detailValue}>
-                {item.bookings.map((booking) => booking.username).join(', ') || 'Nenhum'}
-              </Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Status: <Text style={styles.detailValue}>{item.status}</Text>
-            </Text>
-          </View>
-        )}
+        renderItem={({ item }) => renderServiceCard(item, false)}
         ListEmptyComponent={
           <Text style={styles.emptyText}>Nenhum serviço contratado no momento.</Text>
         }
@@ -199,24 +271,26 @@ const ServicesScreen = () => {
             ) : (
               <Text>No QR Code available</Text>
             )}
-            <Text style={styles.pixTitle}>PIX Code:</Text>
             <TextInput
               style={styles.pixCode}
               value={qrCode}
               editable={false}
             />
-            <Button
-              title="Copy PIX Code"
+            <TouchableOpacity
+              style={styles.copyButton}
               onPress={() => {
                 Clipboard.setString(qrCode);
-                alert("PIX code copied to clipboard!");
+                alert('PIX code copied to clipboard!');
               }}
-            />
-            <Button
-              title="Close"
+            >
+              <Text style={styles.copyButtonText}>Copy PIX Code</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.closeButton}
               onPress={() => setQrModalVisible(false)}
-              color="red"
-            />
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -225,63 +299,28 @@ const ServicesScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#F9FAFB',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
-    marginVertical: 15,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 15,
-    shadowColor: '#000',
+  container: { flex: 1, padding: 20, backgroundColor: '#f4f4f4' },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginVertical: 15 },
+  card: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, marginBottom: 15, shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#EDEDED',
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  serviceDetails: {
-    fontSize: 14,
-    color: '#7F8C8D',
-    marginBottom: 4,
-  },
-  detailValue: {
-    fontWeight: '600',
-    color: '#34495E',
-  },
-  primaryButton: {
-    backgroundColor: '#27AE60',
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#95A5A6',
-    fontSize: 14,
-    marginVertical: 10,
-  },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 3, },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, justifyContent: 'space-between' },
+  avatarContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 1, justifyContent: 'space-between' },
+  comumContainer: { alignItems: 'flex-start', marginBottom: 1 },
+  avatar: { width: 40, height: 40, borderRadius: 100, marginRight: 20, backgroundColor: '#27AE60', alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: 'white', fontWeight: 'bold', fontSize: 14, textAlign: 'center' },
+  workerName: { fontSize: 13, fontWeight: 'bold' },
+  serviceName: { fontSize: 14, fontWeight: 'bold' },
+  description: { fontSize: 12, color: '#7F8C8D' },
+  cost: { fontSize: 14, fontWeight: '600', marginTop: 5 },
+  status: { fontSize: 14, fontWeight: '600', marginTop: 5 },
+  interested: { fontSize: 14, color: '#34495E', marginTop: 10, marginBottom: 10 },
+  primaryButton: { backgroundColor: '#27AE60', padding: 10, borderRadius: 6, alignItems: 'center' },
+  orangeButton: { backgroundColor: '#FFA726', padding: 10, borderRadius: 6, alignItems: 'center', marginTop: 10 },
+  buttonText: { color: '#FFFFFF', fontWeight: 'bold' },
+  emptyText: { textAlign: 'center', fontSize: 14, color: '#95A5A6' },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -294,67 +333,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: '85%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  qrCode: {
-    width: 200,
-    height: 200,
-    marginVertical: 20,
-  },
-  pixTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#34495E',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  pixCode: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    width: '100%',
-    textAlign: 'center',
-    fontSize: 14,
-    backgroundColor: '#f9f9f9',
-    marginBottom: 20,
-  },
-  copyButton: {
-    backgroundColor: '#27AE60',
-    padding: 10,
-    borderRadius: 6,
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  copyButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  closeButton: {
-    backgroundColor: '#F44336',
-    padding: 10,
-    borderRadius: 6,
-    width: '100%',
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 20 },
+  qrCode: { width: 200, height: 200, marginVertical: 20 },
+  pixCode: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, marginBottom: 20 },
+  copyButton: { backgroundColor: '#27AE60', padding: 10, borderRadius: 6, marginBottom: 10 },
+  copyButtonText: { color: '#FFF', fontWeight: 'bold' },
+  closeButton: { backgroundColor: '#F44336', padding: 10, borderRadius: 6 },
+  closeButtonText: { color: '#FFF', fontWeight: 'bold' },
 });
 
 export default ServicesScreen;
