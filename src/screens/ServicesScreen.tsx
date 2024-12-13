@@ -163,7 +163,7 @@ const ServicesScreen = () => {
     paid: 'Pago',
     released: 'Libertado',
     failed: 'Erro',
-    cancelled: 'Cancelado',
+    processing: 'Processando',
   };
 
   const renderServiceCard = (item) => {
@@ -208,6 +208,15 @@ const ServicesScreen = () => {
       buttonLabel = "Finalizado";
       buttonStyle = styles.grayButton;
       buttonDisabled = true;
+    } else if (paymentStatus === "processing") {
+      buttonLabel = "Processando Pagamento, aguarde!";
+      buttonStyle = styles.grayButton;
+      buttonDisabled = true;
+    } else if (paymentStatus === "failed") {
+      buttonLabel = "Erro ao Liberar pagamento";
+      buttonAction = () => releasePayment(item.id, lastPayment.id);
+      buttonStyle = styles.redButton;
+      buttonDisabled = false;
     }
 
     const activeBookings = item.bookings.filter(booking => booking.active);
@@ -385,6 +394,7 @@ const styles = StyleSheet.create({
   interested: { fontSize: 14, color: '#34495E', marginTop: 10, marginBottom: 10 },
   primaryButton: { backgroundColor: '#27AE60', padding: 10, borderRadius: 6, alignItems: 'center' },
   orangeButton: { backgroundColor: '#FFA726', padding: 10, borderRadius: 6, alignItems: 'center', marginTop: 10 },
+  redButton: { backgroundColor: '#ff5555', padding: 10, borderRadius: 6, alignItems: 'center', marginTop: 10 },
   buttonText: { color: '#FFFFFF', fontWeight: 'bold' },
   emptyText: { textAlign: 'center', fontSize: 14, color: '#95A5A6' },
   modalContainer: {
