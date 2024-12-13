@@ -104,6 +104,8 @@ const WorkerServicesScreen = () => {
     fetchServices();
   }, []);
 
+  console.log(selectedService.apartment)
+
   return (
     <ScrollView
       style={styles.container}
@@ -155,54 +157,83 @@ const WorkerServicesScreen = () => {
           visible={detailModalVisible}
           onRequestClose={() => setDetailModalVisible(false)}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>{selectedService.name}</Text>
-              <Text>Status: {selectedService.status}</Text>
-              <Text>Contratações:</Text>
-              <FlatList
-                data={selectedService.bookings || []}
-                keyExtractor={(booking) => booking.id.toString()}
-                renderItem={({ item }) => (
-                  <View style={styles.bookingCard}>
-                    <Text>Usuário: {item.username}</Text>
-                    <Text>Data de Contratação: {item.booked_on}</Text>
-                    <Text>Status: {item.status}</Text>
-                    <Text>Pagamentos:</Text>
-                    {item.payments.map((payment) => (
-                      <View key={payment.id} style={styles.paymentDetails}>
-                        <Text>Valor: R${payment.amount_paid}</Text>
-                        <Text>Status: {payment.status}</Text>
-                        <Text>Liberado: {payment.is_released ? "Sim" : "Não"}</Text>
+          <ScrollView contentContainerStyle={styles.modalScrollContainer}>
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>{selectedService.name}</Text>
+                <Text>Status do Serviço: {selectedService.status}</Text>
+                <Text>Descrição: {selectedService.description}</Text>
+                <Text>Custo Base: R${selectedService.base_cost}</Text>
+                <Text>Data do Serviço: {selectedService.date}</Text>
+                <Text>Máximo de Contratações: {selectedService.max_bookings}</Text>
+
+                {/* Bookings */}
+                <Text style={styles.sectionTitle}>Contratações</Text>
+                <FlatList
+                  data={selectedService.bookings || []}
+                  keyExtractor={(booking) => booking.id.toString()}
+                  renderItem={({ item }) => (
+                    item.active && (
+                      <View style={styles.bookingCard}>
+                        <Text>Usuário: {item.username}</Text>
+                        <Text>Data de Contratação: {item.booked_on}</Text>
+                        <Text>Status da Contratação: {item.status}</Text>
+                        <Text>Ativo: {item.active ? "Sim" : "Não"}</Text>
+
+                        {/* Apartment Details */}
+                        {item.apartment ? (
+                          <View style={styles.apartmentDetails}>
+                            <Text>Apartamento:</Text>
+                            <Text> - Número: {item.apartment.number}</Text>
+                            <Text> - Condomínio: {item.apartment.condominium.name}</Text>
+                            <Text> - Status: {item.apartment.status}</Text>
+                            <Text> - Tipo: {item.apartment.type}</Text>
+                          </View>
+                        ) : (
+                          <Text style={styles.emptyText}>Nenhum apartamento associado.</Text>
+                        )}
+
+                        {/* Payments */}
+                        <Text>Pagamentos:</Text>
+                        {item.payments.map((payment) => (
+                          <View key={payment.id} style={styles.paymentDetails}>
+                            <Text>Valor: R${payment.amount_paid}</Text>
+                            <Text>Status: {payment.status}</Text>
+                            <Text>Liberado: {payment.is_released ? "Sim" : "Não"}</Text>
+                          </View>
+                        ))}
+
+                        {/* Booking Actions */}
+                        {item.status === "available" && (
+                          <TouchableOpacity
+                            style={styles.primaryButton}
+                            onPress={() => handleStartBooking(item.id)}
+                          >
+                            <Text style={styles.buttonText}>Iniciar Contratação</Text>
+                          </TouchableOpacity>
+                        )}
+                        {item.status === "in_progress" && (
+                          <TouchableOpacity
+                            style={styles.primaryButton}
+                            onPress={() => handleCompleteBooking(item.id)}
+                          >
+                            <Text style={styles.buttonText}>Finalizar Contratação</Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
-                    ))}
-                    {item.status === "available" && (
-                      <TouchableOpacity
-                        style={styles.primaryButton}
-                        onPress={() => handleStartBooking(item.id)}
-                      >
-                        <Text style={styles.buttonText}>Iniciar Serviço</Text>
-                      </TouchableOpacity>
-                    )}
-                    {item.status === "in_progress" && (
-                      <TouchableOpacity
-                        style={styles.primaryButton}
-                        onPress={() => handleCompleteBooking(item.id)}
-                      >
-                        <Text style={styles.buttonText}>Finalizar Serviço</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-              />
-              <Button
-                title="Fechar"
-                onPress={() => setDetailModalVisible(false)}
-              />
+                    )
+                  )}
+                />
+                <Button
+                  title="Fechar"
+                  onPress={() => setDetailModalVisible(false)}
+                />
+              </View>
             </View>
-          </View>
+          </ScrollView>
         </Modal>
       )}
+
     </ScrollView>
   );
 };
@@ -257,17 +288,23 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     marginVertical: 5,
   },
+  modalScrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "transparent",
   },
   modalContent: {
     backgroundColor: "#FFF",
     padding: 20,
     borderRadius: 8,
-    width: "80%",
+    width: "90%",
   },
   modalTitle: {
     fontSize: 18,
