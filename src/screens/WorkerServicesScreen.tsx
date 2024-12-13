@@ -184,11 +184,19 @@ const WorkerServicesScreen = () => {
               setDetailModalVisible(true);
             }}
           >
-            <Text>{item.condominium}</Text>
             <Text style={styles.serviceName}>{item.name}</Text>
+            <Text style={styles.serviceDetails}>{item.condominium}</Text>
             <Text style={styles.serviceDetails}>Data do Serviço: {item.date}</Text>
-            <Text style={styles.serviceDetails}>Status: {statusServiceMap[item.status]}</Text>
             <Text style={styles.serviceDetails}>Valor: R${item.base_cost}</Text>
+            <Text style={styles.serviceDetails}>
+              Interessados {item?.bookings?.filter(booking => booking.active).length}
+            </Text>
+            <Text style={[
+              styles.serviceDetails,
+              item.status === 'completed' ? styles.positive : styles.pending,
+            ]}>
+              Status: {statusServiceMap[item.status]}
+            </Text>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
@@ -346,6 +354,19 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  input: {
+    borderWidth: 0.3,
+    borderColor: '#000',
+    borderRadius: 5,
+    marginBottom: 10,
+    padding: 5
+  },
+  positive: {
+    color: '#2ECC71',
+  },
+  pending: {
+    color: '#e79d3c',
   },
   card: {
     backgroundColor: "#FFFFFF",
