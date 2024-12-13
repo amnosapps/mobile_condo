@@ -9,12 +9,12 @@ import {
   ScrollView,
   Modal,
   Button,
+  RefreshControl,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import Profile from "../components/Profile";
 import { useProfile } from "../ProfileContext";
-
 import { API_URL } from "@env";
 
 const WorkerServicesScreen = () => {
@@ -31,15 +31,15 @@ const WorkerServicesScreen = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch services for the current worker
   const fetchServices = async () => {
     const token = await AsyncStorage.getItem("accessToken");
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/services/`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { worker: profile.user.id }, // Fetch services tied to the worker
+        params: { worker: profile.user.id },
       });
       setServices(response.data);
       setLoading(false);
@@ -49,81 +49,68 @@ const WorkerServicesScreen = () => {
     }
   };
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  const handleAddService = async () => {
-    if (
-      newService.name &&
-      newService.base_cost &&
-      newService.max_bookings &&
-      newService.date
-    ) {
-      const token = await AsyncStorage.getItem("accessToken");
-      try {
-        setLoading(true);
-        const response = await axios.post(
-          `${API_URL}/api/services/`,
-          {
-            name: newService.name,
-            description: newService.description,
-            base_cost: newService.base_cost,
-            max_bookings: newService.max_bookings,
-            date: newService.date,
-            provider: profile.user.service_provider_id, // Ensure the provider is sent correctly
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setServices([...services, response.data]);
-        setNewService({
-          name: "",
-          description: "",
-          base_cost: "",
-          max_bookings: "",
-          date: "",
-        });
-        setModalVisible(false);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error adding service:", error);
-        setLoading(false);
-      }
-    } else {
-      alert("Por favor, preencha todos os campos.");
-    }
-  };
-
-  const handleMarkAsCompleted = async (serviceId) => {
+  const handleStartBooking = async (bookingId) => {
     const token = await AsyncStorage.getItem("accessToken");
     try {
       setLoading(true);
       await axios.post(
-        `${API_URL}/api/services/${serviceId}/complete/`,
+        `${API_URL}/api/bookings/${bookingId}/start_booking/`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      setServices((prevServices) =>
-        prevServices.map((service) =>
-          service.id === serviceId && service.status === "in_progress"
-            ? { ...service, status: "waiting_payment" } // Update status to 'waiting_payment'
-            : service
-        )
-      );
+      // Update booking status in UI
+      setSelectedService((prevService) => ({
+        ...prevService,
+        bookings: prevService.bookings.map((booking) =>
+          booking.id === bookingId ? { ...booking, status: "in_progress" } : booking
+        ),
+      }));
       setLoading(false);
-      setDetailModalVisible(false); // Close the detail modal
     } catch (error) {
-      console.error("Error marking service as completed:", error);
+      console.error("Error starting booking:", error);
       setLoading(false);
     }
   };
 
+  const handleCompleteBooking = async (bookingId) => {
+    const token = await AsyncStorage.getItem("accessToken");
+    try {
+      setLoading(true);
+      await axios.post(
+        `${API_URL}/api/bookings/${bookingId}/complete_booking/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Update booking status in UI
+      setSelectedService((prevService) => ({
+        ...prevService,
+        bookings: prevService.bookings.map((booking) =>
+          booking.id === bookingId ? { ...booking, status: "waiting_payment" } : booking
+        ),
+      }));
+      setLoading(false);
+    } catch (error) {
+      console.error("Error completing booking:", error);
+      setLoading(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchServices().finally(() => setRefreshing(false));
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <Profile profile={profile} />
       <Text style={styles.sectionTitle}>Registrar Novo Serviço</Text>
       <TouchableOpacity
@@ -148,97 +135,19 @@ const WorkerServicesScreen = () => {
           >
             <Text style={styles.serviceName}>{item.name}</Text>
             <Text style={styles.serviceDetails}>
-              Descrição:{" "}
-              <Text style={styles.detailValue}>
-                {item.description || "Nenhuma descrição"}
-              </Text>
+              Descrição: {item.description || "Nenhuma descrição"}
             </Text>
             <Text style={styles.serviceDetails}>
-              Custo Base: <Text style={styles.detailValue}>R${item.base_cost}</Text>
+              Custo Base: R${item.base_cost}
             </Text>
-            <Text style={styles.serviceDetails}>
-              Máximo de Contratações:{" "}
-              <Text style={styles.detailValue}>{item.max_bookings}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Data do Serviço: <Text style={styles.detailValue}>{item.date}</Text>
-            </Text>
-            <Text style={styles.serviceDetails}>
-              Status: <Text style={styles.detailValue}>{item.status}</Text>
-            </Text>
+            <Text style={styles.serviceDetails}>Status: {item.status}</Text>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            Nenhum serviço registrado no momento.
-          </Text>
+          <Text style={styles.emptyText}>Nenhum serviço registrado no momento.</Text>
         }
       />
 
-      {/* Add Service Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Adicionar Novo Serviço</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nome do Serviço"
-              value={newService.name}
-              onChangeText={(text) =>
-                setNewService({ ...newService, name: text })
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Descrição"
-              value={newService.description}
-              onChangeText={(text) =>
-                setNewService({ ...newService, description: text })
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Custo Base (R$)"
-              keyboardType="numeric"
-              value={newService.base_cost}
-              onChangeText={(text) =>
-                setNewService({ ...newService, base_cost: text })
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Máximo de Contratações"
-              keyboardType="numeric"
-              value={newService.max_bookings}
-              onChangeText={(text) =>
-                setNewService({ ...newService, max_bookings: text })
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Data do Serviço (YYYY-MM-DD)"
-              value={newService.date}
-              onChangeText={(text) =>
-                setNewService({ ...newService, date: text })
-              }
-            />
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleAddService}
-            >
-              <Text style={styles.buttonText}>Salvar Serviço</Text>
-            </TouchableOpacity>
-            <Button title="Cancelar" onPress={() => setModalVisible(false)} />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Service Detail Modal */}
       {selectedService && (
         <Modal
           animationType="slide"
@@ -249,18 +158,43 @@ const WorkerServicesScreen = () => {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>{selectedService.name}</Text>
-              <Text>Descrição: {selectedService.description}</Text>
-              <Text>Custo Base: R${selectedService.base_cost}</Text>
-              <Text>Data: {selectedService.date}</Text>
               <Text>Status: {selectedService.status}</Text>
-              {selectedService.status === "in_progress" && (
-                <TouchableOpacity
-                  style={styles.primaryButton}
-                  onPress={() => handleMarkAsCompleted(selectedService.id)}
-                >
-                  <Text style={styles.buttonText}>Marcar como Concluído</Text>
-                </TouchableOpacity>
-              )}
+              <Text>Contratações:</Text>
+              <FlatList
+                data={selectedService.bookings || []}
+                keyExtractor={(booking) => booking.id.toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.bookingCard}>
+                    <Text>Usuário: {item.username}</Text>
+                    <Text>Data de Contratação: {item.booked_on}</Text>
+                    <Text>Status: {item.status}</Text>
+                    <Text>Pagamentos:</Text>
+                    {item.payments.map((payment) => (
+                      <View key={payment.id} style={styles.paymentDetails}>
+                        <Text>Valor: R${payment.amount_paid}</Text>
+                        <Text>Status: {payment.status}</Text>
+                        <Text>Liberado: {payment.is_released ? "Sim" : "Não"}</Text>
+                      </View>
+                    ))}
+                    {item.status === "available" && (
+                      <TouchableOpacity
+                        style={styles.primaryButton}
+                        onPress={() => handleStartBooking(item.id)}
+                      >
+                        <Text style={styles.buttonText}>Iniciar Serviço</Text>
+                      </TouchableOpacity>
+                    )}
+                    {item.status === "in_progress" && (
+                      <TouchableOpacity
+                        style={styles.primaryButton}
+                        onPress={() => handleCompleteBooking(item.id)}
+                      >
+                        <Text style={styles.buttonText}>Finalizar Serviço</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              />
               <Button
                 title="Fechar"
                 onPress={() => setDetailModalVisible(false)}
@@ -284,14 +218,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#333",
     marginVertical: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-    backgroundColor: "#FFF",
   },
   primaryButton: {
     backgroundColor: "#27AE60",
@@ -319,20 +245,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#EDEDED",
   },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#2C3E50",
-    marginBottom: 8,
+  bookingCard: {
+    padding: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 6,
+    backgroundColor: "#f9f9f9",
   },
-  serviceDetails: {
-    fontSize: 14,
-    color: "#7F8C8D",
-    marginBottom: 4,
-  },
-  detailValue: {
-    fontWeight: "600",
-    color: "#34495E",
+  paymentDetails: {
+    paddingLeft: 10,
+    marginVertical: 5,
   },
   modalContainer: {
     flex: 1,
