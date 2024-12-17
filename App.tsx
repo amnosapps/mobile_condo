@@ -11,6 +11,7 @@ import LoginScreen from './src/screens/Login';
 import HomeScreen from './src/screens/HomeScreen';
 import ReservationDetailsScreen from './src/components/ReservationDetailsScreen';
 import ComingSoonScreen from './src/screens/ComingSoonScreen';
+import BootSplash from 'react-native-bootsplash'
 
 const RootStack = createNativeStackNavigator();
 
@@ -60,7 +61,7 @@ const App = () => {
   }, []);
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} onReady={() => BootSplash.hide({fade: true})}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           <>
