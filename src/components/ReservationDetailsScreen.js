@@ -234,6 +234,7 @@ const ReservationDetailsScreen = ({ route, navigation }) => {
           onChangeText={(value) =>
             setReservationData((prev) => ({ ...prev, guest_document: value }))
           }
+          placeholderTextColor="#888"
         />
 
         <Text style={styles.label}>Contato do Hóspede:</Text>
@@ -244,6 +245,7 @@ const ReservationDetailsScreen = ({ route, navigation }) => {
             setReservationData((prev) => ({ ...prev, guest_phone: value }))
           }
           placeholder="88 88888-8888"
+          placeholderTextColor="#888"
         />
 
         <Text style={styles.label}>Endereço:</Text>
@@ -252,53 +254,63 @@ const ReservationDetailsScreen = ({ route, navigation }) => {
           placeholder="Endereço"
           value={address.endereco || ''}
           onChangeText={(value) => handleAddressChange('endereco', value)}
+          placeholderTextColor="#888"
         />
         <TextInput
           style={styles.input}
           placeholder="Bairro"
           value={address.bairro || ''}
           onChangeText={(value) => handleAddressChange('bairro', value)}
+          placeholderTextColor="#888"
         />
         <TextInput
           style={styles.input}
           placeholder="CEP"
           value={address.cep || ''}
           onChangeText={(value) => handleAddressChange('cep', value)}
+          placeholderTextColor="#888"
         />
         <TextInput
           style={styles.input}
           placeholder="Cidade"
           value={address.cidade || ''}
           onChangeText={(value) => handleAddressChange('cidade', value)}
+          placeholderTextColor="#888"
         />
         <TextInput
           style={styles.input}
           placeholder="Estado"
           value={address.estado || ''}
           onChangeText={(value) => handleAddressChange('estado', value)}
+          placeholderTextColor="#888"
         />
         <TextInput
           style={styles.input}
           placeholder="País"
           value={address.pais || ''}
           onChangeText={(value) => handleAddressChange('pais', value)}
+          placeholderTextColor="#888"
         />
 
         <Text style={styles.label}>Tem veículo?</Text>
-        <Picker
-          selectedValue={hasCar}
-          onValueChange={handleHasCarChange}
-          style={styles.picker}
-        >
-          <Picker.Item label="Não" value={false} />
-          <Picker.Item label="Sim" value={true} />
-        </Picker>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={hasCar}
+            onValueChange={handleHasCarChange}
+            style={styles.picker}
+            dropdownIconColor={'#000'}
+          >
+            <Picker.Item label="Não" value={false} />
+            <Picker.Item label="Sim" value={true} />
+          </Picker>
+          </View>
         {hasCar && (
           <TextInput
             style={styles.input}
             placeholder="Placa do Veículo"
             value={vehiclePlate}
             onChangeText={setVehiclePlate}
+            placeholderTextColor="#888"
           />
         )}
 
@@ -326,21 +338,27 @@ const ReservationDetailsScreen = ({ route, navigation }) => {
               placeholder="Nome"
               value={guest.name}
               onChangeText={(value) => updateGuestDetails(index, 'name', value)}
+              placeholderTextColor="#888"
             />
             <TextInput
               style={styles.input}
               placeholder="Documento"
               value={guest.document}
               onChangeText={(value) => updateGuestDetails(index, 'document', value)}
+              placeholderTextColor="#888"
             />
-            <Picker
-              selectedValue={guest.is_child}
-              onValueChange={(value) => updateGuestDetails(index, 'is_child', value)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Adulto" value={false} />
-              <Picker.Item label="Criança" value={true} />
-            </Picker>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={guest.is_child}
+                onValueChange={(value) => updateGuestDetails(index, 'is_child', value)}
+                placeholderTextColor="#888"
+                style={styles.picker}
+                dropdownIconColor={'#000'}
+              >
+                <Picker.Item label="Adulto" value={false} />
+                <Picker.Item label="Criança" value={true} />
+              </Picker>
+            </View>
           </View>
         ))}
         
@@ -418,9 +436,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     marginBottom: 16,
+    color: '#010101',
+    paddingLeft: '2%',
+  },
+  pickerContainer: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden', // Ensures border radius works
+    backgroundColor: 'transparent', // Adds a background to the container
+    marginBottom: 10,
+    paddingLeft: '2%',
   },
   picker: {
-    // marginBottom: 10,
+    color: '#000',
   },
   guestContainer: {
     marginBottom: 16,

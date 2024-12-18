@@ -46,16 +46,18 @@ const LoginScreen = ({ route }) => {
                 <Text style={styles.title}>iGoove</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Usuário"
+                    placeholder="Digite seu usuário"
                     value={username}
                     onChangeText={setUsername}
+                    placeholderTextColor="#888"
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Senha"
+                    placeholder="Digite sua senha"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
+                    placeholderTextColor="#888"
                 />
                 {error && <Text style={styles.error}>{error}</Text>}
                 <CustomButton title="Entrar" onPress={handleLogin} />
@@ -79,7 +81,8 @@ const styles = StyleSheet.create({
         borderColor: '#ddd',
         padding: 12,
         marginBottom: 16,
-        borderRadius: 20
+        borderRadius: 20,
+        color: '#010101'
     },
     error: { color: 'red', textAlign: 'center', marginBottom: 16 },
     file: { padding: 20, borderWidth: 1, margin: 5 },

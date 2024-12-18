@@ -103,7 +103,7 @@ const CalendarReservationManager = ({ route }) => {
 
   const formatDate = (dateString) => {
     if (!dateString) return null
-    return format(dateString, "dd/MM HH:mm");
+    return format(dateString, "dd/MM");
   };
 
   useEffect(() => {
@@ -131,10 +131,12 @@ const CalendarReservationManager = ({ route }) => {
         <Text style={{ color: '#fff', fontWeight: '500' }}>{item.room}</Text>
       </View>
       <View style={styles.reservationInfo}>
-        <Text style={styles.reservationName}>Hóspede: {item.name}</Text>
+        <Text style={styles.reservationName}>{item.name}</Text>
         <View style={styles.dividerLine} />
-        <Text style={{ color: '#fff' }}>Checkin: {formatDate(item.checkin)}</Text>
-        <Text style={{ color: '#fff' }}>Checkout: {formatDate(item.checkout)}</Text>
+        <View style={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ color: '#fff', textAlign: 'left', fontSize: 12 }}>Checkin: {formatDate(item.checkin)}</Text>
+          <Text style={{ color: '#fff', textAlign: 'right', fontSize: 12 }}>Checkout: {formatDate(item.checkout)}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -151,7 +153,7 @@ const CalendarReservationManager = ({ route }) => {
       <View style={styles.reservationHeader}>
         <Text style={styles.dateText}>
           {selectedDate
-            ? `Reservas em ${format(parseISO(selectedDate), "EEE, dd/MM", { locale: ptBR })}`
+            ? `Checkins em ${format(parseISO(selectedDate), "EEE, dd/MM", { locale: ptBR })}`
             : 'Reservas da Semana'}
         </Text>
       </View>
@@ -171,9 +173,9 @@ const CalendarReservationManager = ({ route }) => {
 export default CalendarReservationManager;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#F9FAFB' },
+  container: { flex: 1, padding: 16, paddingBottom: 40, backgroundColor: '#F9FAFB' },
   reservationHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  dateText: { fontSize: 16, fontWeight: '400', marginVertical: 10, width: '80%' },
+  dateText: { fontSize: 14, fontWeight: '500', marginVertical: 10, width: '80%' },
   reservationItem: {
     flexDirection: 'row',
     padding: 10,
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   reservationInfo: { flex: 1, paddingHorizontal: 10 },
-  reservationName: { fontSize: 15, fontWeight: 'bold', color: '#fff' },
+  reservationName: { fontSize: 13, fontWeight: 'bold', color: '#fff' },
   dividerLine: { height: 1, backgroundColor: '#fff', marginVertical: 8 },
   noReservationText: { textAlign: 'center', marginTop: 20, fontSize: 16, color: '#888' },
 });

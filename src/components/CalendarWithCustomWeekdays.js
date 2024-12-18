@@ -54,7 +54,6 @@ const CalendarWithCustomLocalization = ({ reservations, onDayPress }) => {
           textMonthFontWeight: 'bold',
           textDayHeaderFontWeight: 'bold',
         }}
-        // Month and Weekday localization is now handled by LocaleConfig
       />
     </View>
   );
@@ -62,9 +61,7 @@ const CalendarWithCustomLocalization = ({ reservations, onDayPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    marginBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f3f3f3',
   },
 });
 

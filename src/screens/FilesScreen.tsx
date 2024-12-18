@@ -1,6 +1,6 @@
 // FilesScreen.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Text, Alert, TouchableOpacity, StyleSheet, ActivityIndicator, View } from 'react-native';
+import { Text, Alert, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, View } from 'react-native';
 import Container from '../components/Container';
 import FileLoaderButton from '../components/FileLoaderButton';
 import DatePickerInput from '../components/DatePickerInput';
@@ -141,30 +141,28 @@ const FilesScreen = ({ navigation }) => {
           <Text>Carregando...</Text>
         </View>
       ) : files.length > 0 ? (
-        <View style={{ backgroundColor: 'transparent' }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Geração de Reserva</Text>
-          <DatePickerInput
-            label="Data de Check-In"
-            dateValue={reservationData.checkin}
-            onDateChange={(date) => updateReservationData('checkin', date)}
-            hourValue={'14:00'}
-            // onHourChange={(hour) => updateReservationData('checkinHour', hour)}
-          />
-          <DatePickerInput
-            label="Data de Check-Out"
-            dateValue={reservationData.checkout}
-            onDateChange={(date) => updateReservationData('checkout', date)}
-            hourValue={'11:00'}
-            // onHourChange={(hour) => updateReservationData('checkoutHour', hour)}
-          />
-          <ReservationForm
-            apartments={apartments}
-            reservationData={reservationData}
-            updateReservationData={updateReservationData}
-            clearReservationData={clearReservationData}
-          />
-          <ClearButton title="Limpar Reserva" onPress={clearReservationData}/>
-        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.container}>
+            <Text style={styles.title}>Geração de Reserva</Text>
+            <DatePickerInput
+              label="Data de Check-In"
+              dateValue={reservationData.checkin}
+              onDateChange={(date) => updateReservationData('checkin', date)}
+            />
+            <DatePickerInput
+              label="Data de Check-Out"
+              dateValue={reservationData.checkout}
+              onDateChange={(date) => updateReservationData('checkout', date)}
+            />
+            <ReservationForm
+              apartments={apartments}
+              reservationData={reservationData}
+              updateReservationData={updateReservationData}
+              clearReservationData={clearReservationData}
+            />
+            <ClearButton title="Limpar Reserva" onPress={clearReservationData} />
+          </View>
+        </ScrollView>
       ) : (
         <View>
           <Text style={{ fontSize: 16, textAlign: 'center', marginVertical: 20 }}>Processar Reserva</Text>
@@ -179,6 +177,21 @@ export default FilesScreen;
 
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 100, // Ensure scroll content does not overlap footer
+  },
+  container: {
+    backgroundColor: 'transparent',
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center', // Center children horizontally
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center', // Center the title text
+  },
   clearButton: {
     alignSelf: 'center',
     borderWidth: 1,

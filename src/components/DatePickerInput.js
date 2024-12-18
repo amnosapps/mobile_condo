@@ -2,26 +2,28 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
 
-const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
-
-const DatePickerInput = ({ label, dateValue, onDateChange, hourValue, onHourChange }) => {
+const DatePickerInput = ({ label, dateValue, onDateChange }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // Format date to DD/MM/YYYY
+  const formatDate = (date) => {
+    if (!date) return '';
+    const [year, month, day] = date.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   return (
-    <View>
+    <View style={{ width: '90%', justifyContent: 'center' }}>
       <Text>{label}:</Text>
-      <View style={styles.dateTimeRow}>
-        <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-          <TextInput style={styles.input} value={dateValue} placeholder="YYYY-MM-DD" editable={false} />
-        </TouchableOpacity>
-        <Picker enabled={false} selectedValue={hourValue} style={styles.hourPicker} onValueChange={onHourChange}>
-          {hours.map((hour) => (
-            <Picker.Item key={hour} label={hour} value={hour} />
-          ))}
-        </Picker>
-      </View>
+      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+        <TextInput
+          style={styles.input}
+          value={formatDate(dateValue)} // Display the formatted date
+          placeholder="DD/MM/YYYY"
+          editable={false}
+        />
+      </TouchableOpacity>
       {showDatePicker && (
         <DateTimePicker
           value={new Date(dateValue || Date.now())}
@@ -29,7 +31,11 @@ const DatePickerInput = ({ label, dateValue, onDateChange, hourValue, onHourChan
           display="default"
           onChange={(event, date) => {
             setShowDatePicker(false);
-            if (date) onDateChange(date.toISOString().split('T')[0]);
+            if (date) {
+              // Convert date to YYYY-MM-DD and pass it to the parent
+              const formattedDate = date.toISOString().split('T')[0];
+              onDateChange(formattedDate);
+            }
           }}
         />
       )}
@@ -38,9 +44,13 @@ const DatePickerInput = ({ label, dateValue, onDateChange, hourValue, onHourChan
 };
 
 const styles = StyleSheet.create({
-  dateTimeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, justifyContent: 'space-between' },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 15, borderRadius: 4, flex: 1 },
-  hourPicker: { height: 50, width: 120, marginLeft: 8 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 15,
+    borderRadius: 4,
+    marginBottom: 16,
+  },
 });
 
 export default DatePickerInput;

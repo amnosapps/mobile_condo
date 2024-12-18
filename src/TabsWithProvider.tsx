@@ -151,8 +151,9 @@ const TabsWithProvider = () => {
               left: 16,
               right: 16,
               borderRadius: 10,
-              marginLeft: 10,
-              marginRight: 10,
+              marginLeft: '5%',
+              marginRight: '5%',
+              marginBottom: '1%'
             },
           }}
         >

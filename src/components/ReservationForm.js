@@ -67,25 +67,33 @@ const ReservationForm = ({ apartments, reservationData, updateReservationData, c
         onChangeText={(value) => updateReservationData('guests', value)}
       />
       <Text>Há Crianças:</Text>
-      <Picker
-        selectedValue={reservationData.has_children ? "Sim" : "Não"}
-        style={styles.picker}
-        onValueChange={(value) => updateReservationData('has_children', value === "Sim")}
-      >
-        <Picker.Item label="Sim" value="Sim" />
-        <Picker.Item label="Não" value="Não" />
-      </Picker>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={reservationData.has_children ? "Sim" : "Não"}
+          style={styles.picker}
+          onValueChange={(value) => updateReservationData('has_children', value === "Sim")}
+          dropdownIconColor={'#000'}
+        >
+          <Picker.Item label="Sim" value="Sim" />
+          <Picker.Item label="Não" value="Não" />
+        </Picker>
+      </View>
+      
       <Text>Apartamento:</Text>
-      <Picker
-        selectedValue={reservationData.apartment}
-        style={styles.picker}
-        onValueChange={(value) => updateReservationData('apartment', value)}
-      >
-        <Picker.Item label="Seleciona o Apartamento" value="" />
-        {apartments.map((apartment) => (
-          <Picker.Item key={apartment.id} label={apartment.number} value={apartment.id} />
-        ))}
-      </Picker>
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={reservationData.apartment}
+          style={styles.picker}
+          onValueChange={(value) => updateReservationData('apartment', value)}
+          dropdownIconColor={'#000'}
+        >
+          <Picker.Item label="Seleciona o Apartamento" value="" />
+          {apartments.map((apartment) => (
+            <Picker.Item key={apartment.id} label={apartment.number} value={apartment.id} />
+          ))}
+        </Picker>
+      </View>
+      
       <ReservationButton title="Registrar Reserva" onPress={handleSubmit} />
     </View>
   );
@@ -101,8 +109,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 4,
     marginBottom: 10,
+    color: '#000'
   },
-  picker: { height: 50, width: '100%', marginBottom: 16 },
+  pickerContainer: {
+    // width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden', // Ensures border radius works
+    backgroundColor: 'transparent', // Adds a background to the container
+    marginBottom: 10
+  },
+  picker: { color: '#000' },
   reservationButton: {
     alignSelf: 'center',
     borderRadius: 20,

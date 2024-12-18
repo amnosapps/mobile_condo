@@ -170,24 +170,30 @@ const ApartmentList = ({ route }) => {
               <Text style={styles.modalTitle}>
                 Editar Apartamento {selectedApartment.number}
               </Text>
-              <Picker
-                selectedValue={formData.type}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
-                style={styles.picker}
-              >
-                {TYPE_CHOICES.map((choice) => (
-                  <Picker.Item key={choice.value} label={choice.label} value={choice.value.toString()} />
-                ))}
-              </Picker>
-              <Picker
-                selectedValue={formData.status}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
-                style={styles.picker}
-              >
-                {STATUS_CHOICES.map((choice) => (
-                  <Picker.Item key={choice.value} label={choice.label} value={choice.value.toString()} />
-                ))}
-              </Picker>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={formData.type}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
+                  style={styles.picker}
+                  dropdownIconColor={'#000'}
+                >
+                  {TYPE_CHOICES.map((choice) => (
+                    <Picker.Item key={choice.value} label={choice.label} value={choice.value.toString()} />
+                  ))}
+                </Picker>
+              </View>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={formData.status}
+                  onValueChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
+                  style={styles.picker}
+                  dropdownIconColor={'#000'}
+                >
+                  {STATUS_CHOICES.map((choice) => (
+                    <Picker.Item key={choice.value} label={choice.label} value={choice.value.toString()} />
+                  ))}
+                </Picker>
+              </View>
               <Text style={styles.label}>Capacidade</Text>
               <TextInput
                 style={styles.input}
@@ -222,7 +228,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   listContainer: {
-    paddingBottom: 20,
+    paddingBottom: 80,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -236,6 +242,8 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderColor: '#EDEDED',
     borderWidth: 1,
+    marginRight: '2%',
+    marginLeft: '2%'
   },
   cardHeader: {
     flexDirection: 'row',
@@ -291,9 +299,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 8,
     marginBottom: 16,
+    color: '#000'
+  },
+  pickerContainer: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden', // Ensures border radius works
+    backgroundColor: '#fff', // Adds a background to the container
+    marginBottom: 10
   },
   picker: {
-    marginBottom: 16,
+    width: '100%',
+    // height: 50,
+    color: '#000',
   },
   modalButtons: {
     flexDirection: 'row',
