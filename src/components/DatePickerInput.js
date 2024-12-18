@@ -22,6 +22,7 @@ const DatePickerInput = ({ label, dateValue, onDateChange }) => {
           value={formatDate(dateValue)} // Display the formatted date
           placeholder="DD/MM/YYYY"
           editable={false}
+          placeholderTextColor={'#000'}
         />
       </TouchableOpacity>
       {showDatePicker && (

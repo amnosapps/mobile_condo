@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 10,
     borderRadius: 4,
     marginBottom: 10,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden', // Ensures border radius works
     backgroundColor: 'transparent', // Adds a background to the container
-    marginBottom: 10
+    marginBottom: 15
   },
   picker: { color: '#000' },
   reservationButton: {

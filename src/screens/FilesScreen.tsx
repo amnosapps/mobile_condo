@@ -16,6 +16,7 @@ const FilesScreen = ({ navigation }) => {
   const [files, setFiles] = useState([]);
   const [apartments, setApartments] = useState([]);
   const [loading, setLoading] = useState(false); // Loading state
+  const [isManualMode, setIsManualMode] = useState(false); // Track manual mode
   const [reservationData, setReservationData] = useState({
     checkin: '',
     checkout: '',
@@ -27,14 +28,12 @@ const FilesScreen = ({ navigation }) => {
     reservation_file: '',
   });
 
-  // Load data from `sharedFiles` when it changes
   useEffect(() => {
     if (sharedFiles) {
       setFiles(sharedFiles);
       const firstFile = sharedFiles[0];
       if (firstFile && firstFile.extractedData) {
-        setLoading(true); // Start loading
-        console.log(firstFile.extractedData.check_in)
+        setLoading(true);
         setReservationData((prevData) => ({
           ...prevData,
           reservation_file: firstFile.extractedData.base64_pdf || '',
@@ -46,16 +45,14 @@ const FilesScreen = ({ navigation }) => {
           apartment: '',
           has_children: false,
         }));
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     }
   }, [sharedFiles]);
 
-  // Fetch apartment options from API
   useEffect(() => {
     const fetchApartments = async () => {
-      console.log(API_URL)
-      setLoading(true); // Start loading
+      setLoading(true);
       const token = await AsyncStorage.getItem('accessToken');
       try {
         const response = await axios.get(`${API_URL}/api/apartments/`, {
@@ -63,9 +60,9 @@ const FilesScreen = ({ navigation }) => {
         });
         setApartments(response.data);
       } catch (error) {
-        console.error("Failed to load apartments", error);
+        console.error('Failed to load apartments', error);
       } finally {
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     };
     fetchApartments();
@@ -75,7 +72,6 @@ const FilesScreen = ({ navigation }) => {
     setReservationData((prevData) => ({ ...prevData, [field]: value }));
   };
 
-  // Function to reset reservation data
   const clearReservationData = () => {
     setReservationData({
       checkin: '',
@@ -87,16 +83,14 @@ const FilesScreen = ({ navigation }) => {
       has_children: false,
     });
     setFiles([]);
+    setIsManualMode(false); // Reset manual mode
   };
 
-  // Function to handle file selection from FileLoaderButton
   const onFileSelected = async (file) => {
-    setLoading(true); // Start loading when file is selected
+    setLoading(true);
     try {
-      console.log(API_URL)
       const fileContent = await RNFS.readFile(file.uri, 'base64');
       const token = await AsyncStorage.getItem('accessToken');
-
       const response = await axios.post(
         `${API_URL}/api/reservations/extract-dates/`,
         { pdf_base64: fileContent },
@@ -113,7 +107,7 @@ const FilesScreen = ({ navigation }) => {
           guests: response.data.guests || 1,
           apartment: '',
           has_children: false,
-          reservation_file: response.data.base64_pdf
+          reservation_file: response.data.base64_pdf,
         }));
         setFiles([file]);
       }
@@ -121,9 +115,18 @@ const FilesScreen = ({ navigation }) => {
       console.error('Error processing file:', error);
       Alert.alert('Error', 'Failed to process file');
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
+
+  const ManualModeButton = () => (
+    <TouchableOpacity
+      style={styles.manualModeButton}
+      onPress={() => setIsManualMode(true)}
+    >
+      <Text style={styles.manualModeButtonText}>Criar Reserva Manualmente</Text>
+    </TouchableOpacity>
+  );
 
   const ClearButton = ({ title, onPress }) => {
     return (
@@ -136,11 +139,11 @@ const FilesScreen = ({ navigation }) => {
   return (
     <Container>
       {loading ? (
-        <View style={{ backgroundColor: 'transparent', flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#F46600" /> {/* Loading spinner */}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#F46600" />
           <Text>Carregando...</Text>
         </View>
-      ) : files.length > 0 ? (
+      ) : (files.length > 0 || isManualMode) ? (
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.container}>
             <Text style={styles.title}>Geração de Reserva</Text>
@@ -164,9 +167,12 @@ const FilesScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       ) : (
-        <View>
-          <Text style={{ fontSize: 16, textAlign: 'center', marginVertical: 20 }}>Processar Reserva</Text>
+        <View style={styles.container}>
+          <Text style={{ fontSize: 16, textAlign: 'center', marginVertical: 20 }}>
+            Gerar Reserva
+          </Text>
           <FileLoaderButton onFileSelected={onFileSelected} />
+          <ManualModeButton />
         </View>
       )}
     </Container>
@@ -175,34 +181,56 @@ const FilesScreen = ({ navigation }) => {
 
 export default FilesScreen;
 
-
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingBottom: 100, // Ensure scroll content does not overlap footer
+    paddingBottom: 100,
   },
   container: {
-    backgroundColor: 'transparent',
     width: '100%',
+    display: 'flex',
     justifyContent: 'center',
-    alignItems: 'center', // Center children horizontally
+    alignItems: 'center',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    textAlign: 'center', // Center the title text
+    textAlign: 'center',
+  },
+  manualModeButton: {
+    marginTop: 20,
+    borderColor: '#F46600',
+    borderWidth: 1,
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignSelf: 'center',
+    width: '80%'
+  },
+  manualModeButtonText: {
+    color: '#F46600',
+    fontSize: 14,
+    fontWeight: '400',
+    textAlign: 'center',
   },
   clearButton: {
     alignSelf: 'center',
     borderWidth: 1,
     borderRadius: 20,
     borderColor: '#F46600',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     padding: 10,
     width: '82%',
   },
   textclearButton: {
     textAlign: 'center',
     color: '#F46600',
-  }
+    fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
