@@ -127,8 +127,8 @@ const CalendarReservationManager = ({ route }) => {
     const checkoutDate = new Date(checkout);
   
     if (checkoutDate < today) return '#B0B0B0'; // Past reservation (Gray)
-    if (checkinDate <= today && checkoutDate >= today) return '#008000'; // Current reservation (Green)
-    return '#F46600'; // Future reservation (Orange)
+    if (checkinDate <= today && checkoutDate >= today) return '#27AE60'; // Current reservation (Green)
+    return '#FFA726'; // Future reservation (Orange)
   };
 
   const renderReservation = ({ item }) => (
