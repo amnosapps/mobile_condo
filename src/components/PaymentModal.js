@@ -11,12 +11,10 @@ import {
   ScrollView,
 } from "react-native";
 
-const PaymentModal = ({ visible, onClose, onConfirm }) => {
+const PaymentModal = ({ visible, onClose, onConfirm, qrCode, qrCodeBase64 }) => {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("pix");
-  const [error, setError] = useState("");
-  const [qrCode, setQrCode] = useState("");
-  const [qrCodeBase64, setQrCodeBase64] = useState("");
+  const [error, setError] = useState(null);
 
   const [identificationType, setIdentificationType] = useState("CPF");
   const [identificationNumber, setIdentificationNumber] = useState("");
@@ -26,7 +24,14 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
 
   const handlePayment = async () => {
     setLoading(true);
-    setError("");
+    setError(null);
+
+    if (!shopperName.trim() || !shopperEmail.trim() || !identificationType.trim() || !identificationNumber.trim() || !shopperPhone.trim()) {
+      setLoading(false);
+      setError("Todos os campos são obrigatórios. Por favor, preencha todos os campos.");
+      return;
+    }
+
     try {
       if (paymentMethod === "pix") {
 
@@ -46,15 +51,7 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
           },
         }
 
-        console.log(payload)
-        const pixPaymentData = await onConfirm(payload);
-
-        if (pixPaymentData && pixPaymentData.qr_code) {
-          setQrCode(pixPaymentData.qr_code);
-          setQrCodeBase64(pixPaymentData.qr_code_base64);
-        } else {
-          setError("Falha ao gerar o pagamento PIX. Por favor, tente novamente.");
-        }
+        await onConfirm(payload);
       } else {
         alert("Apenas pagamento PIX é suportado no momento.");
       }
@@ -71,46 +68,9 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Pix</Text>
 
-          {/* <View style={styles.methodSelector}>
-            <TouchableOpacity
-              style={[
-                styles.paymentMethodButton,
-                paymentMethod === "pix" && styles.selectedPaymentMethod,
-              ]}
-              onPress={() => setPaymentMethod("pix")}
-            >
-              <Text style={styles.paymentMethodText}>PIX</Text>
-            </TouchableOpacity>
-          </View> */}
-
           <ScrollView contentContainerStyle={{ alignItems: "center", width: "100%" }}>
             {loading ? (
               <ActivityIndicator size="large" color="#27AE60" />
-            ) : qrCode ? (
-              <>
-                <Text style={styles.sectionTitle}>Escaneie o QR Code:</Text>
-                {qrCodeBase64 && (
-                  <Image
-                    source={{ uri: `data:image/png;base64,${qrCodeBase64}` }}
-                    style={styles.qrCode}
-                  />
-                )}
-                <Text style={styles.sectionTitle}>Ou use o código PIX:</Text>
-                <TextInput
-                  style={styles.pixCode}
-                  value={qrCode}
-                  editable={false}
-                />
-                <TouchableOpacity
-                  style={styles.copyButton}
-                  onPress={() => {
-                    navigator.clipboard.writeText(qrCode);
-                    alert("Código PIX copiado para a área de transferência!");
-                  }}
-                >
-                  <Text style={styles.copyText}>Copiar Código PIX</Text>
-                </TouchableOpacity>
-              </>
             ) : (
               <View style={{ justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
                 <TextInput
@@ -118,6 +78,7 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
                   placeholder="Nome Completo"
                   value={shopperName}
                   onChangeText={setShopperName}
+                  placeholderTextColor={'#000'}
                 />
                 <TextInput
                   style={styles.input}
@@ -125,12 +86,14 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
                   value={shopperEmail}
                   onChangeText={setShopperEmail}
                   keyboardType="email-address"
+                  placeholderTextColor={'#000'}
                 />
                 <TextInput
                   style={styles.input}
                   placeholder="Tipo de Documento (CPF)"
                   value={identificationType}
                   onChangeText={setIdentificationType}
+                  placeholderTextColor={'#000'}
                 />
                 <TextInput
                   style={styles.input}
@@ -138,6 +101,7 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
                   value={identificationNumber}
                   onChangeText={setIdentificationNumber}
                   keyboardType="numeric"
+                  placeholderTextColor={'#000'}
                 />
                 <TextInput
                   style={styles.input}
@@ -145,6 +109,7 @@ const PaymentModal = ({ visible, onClose, onConfirm }) => {
                   value={shopperPhone}
                   onChangeText={setShopperPhone}
                   keyboardType="phone-pad"
+                  placeholderTextColor={'#000'}
                 />
                 <TouchableOpacity
                   style={styles.generateButton}
@@ -215,7 +180,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: "#000",
     marginTop: 10,
     marginBottom: 5,
   },

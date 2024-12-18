@@ -121,9 +121,19 @@ const CalendarReservationManager = ({ route }) => {
     }
   }, [selectedDate, reservationsData]);
 
+  const getReservationColor = (checkin, checkout) => {
+    const today = new Date();
+    const checkinDate = new Date(checkin);
+    const checkoutDate = new Date(checkout);
+  
+    if (checkoutDate < today) return '#B0B0B0'; // Past reservation (Gray)
+    if (checkinDate <= today && checkoutDate >= today) return '#008000'; // Current reservation (Green)
+    return '#F46600'; // Future reservation (Orange)
+  };
+
   const renderReservation = ({ item }) => (
     <TouchableOpacity
-      style={styles.reservationItem}
+      style={[styles.reservationItem, { backgroundColor: getReservationColor(item.checkin, item.checkout) }]}
       onPress={() => navigation.navigate('ReservationDetails', { reservation: item })}
     >
       <View style={{ width: '30%', justifyContent: 'center', alignItems: 'center' }}>
@@ -133,7 +143,7 @@ const CalendarReservationManager = ({ route }) => {
       <View style={styles.reservationInfo}>
         <Text style={styles.reservationName}>{item.name}</Text>
         <View style={styles.dividerLine} />
-        <View style={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={{ color: '#fff', textAlign: 'left', fontSize: 12 }}>Checkin: {formatDate(item.checkin)}</Text>
           <Text style={{ color: '#fff', textAlign: 'right', fontSize: 12 }}>Checkout: {formatDate(item.checkout)}</Text>
         </View>
@@ -173,7 +183,7 @@ const CalendarReservationManager = ({ route }) => {
 export default CalendarReservationManager;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, paddingBottom: 40, backgroundColor: '#F9FAFB' },
+  container: { flex: 1, padding: 16, paddingBottom: 80, backgroundColor: '#F9FAFB' },
   reservationHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
   dateText: { fontSize: 14, fontWeight: '500', marginVertical: 10, width: '80%' },
   reservationItem: {

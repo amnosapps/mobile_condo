@@ -328,40 +328,45 @@ const ServicesScreen = () => {
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
         onConfirm={confirmPayment}
+        qrCode={qrCode}
+        qrCodeBase64={qrCodeBase64}
       />
 
       {/* QR Code Modal */}
       <Modal visible={qrModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>PIX Payment</Text>
+            <Text style={styles.sectionTitle}>Escaneie o QR Code:</Text>
             {qrCodeBase64 ? (
               <Image
                 source={{ uri: `data:image/png;base64,${qrCodeBase64}` }}
                 style={styles.qrCode}
               />
             ) : (
-              <Text>No QR Code available</Text>
+              <Text>QrCode Indisponível</Text>
             )}
+            <Text style={styles.sectionTitle}>Ou use o código PIX:</Text>
             <TextInput
               style={styles.pixCode}
               value={qrCode}
               editable={false}
+              placeholderTextColor={'#000'}
+              multiline={true}
             />
             <TouchableOpacity
               style={styles.copyButton}
               onPress={() => {
                 Clipboard.setString(qrCode);
-                alert('PIX code copied to clipboard!');
+                alert("Código PIX copiado para a área de transferência!");
               }}
             >
-              <Text style={styles.copyButtonText}>Copy PIX Code</Text>
+              <Text style={styles.copyText}>Copiar Código PIX</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setQrModalVisible(false)}
             >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={styles.closeButtonText}>Fechar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -373,7 +378,7 @@ const ServicesScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f4f4f4' },
   contentContainer: {
-    paddingBottom: 100, // Add enough padding to prevent overlap with tab bar
+    paddingBottom: 130, // Add enough padding to prevent overlap with tab bar
   },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginVertical: 15 },
   card: { backgroundColor: '#FFFFFF', padding: 16, borderRadius: 8, marginBottom: 15, shadowColor: '#000',
@@ -447,7 +452,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#555",
   },
-  
+  copyText: {
+    color: "#FFF",
+    fontWeight: "bold",
+  },
 });
 
 export default ServicesScreen;

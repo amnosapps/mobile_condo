@@ -147,7 +147,7 @@ const TabsWithProvider = () => {
               backgroundColor: '#fff',
               position: 'absolute',
               height: 60,
-              bottom: 10,
+              bottom: 5,
               left: 16,
               right: 16,
               borderRadius: 10,
